@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # основной блок данных
@@ -15,7 +15,7 @@ class MainPart(BaseModel):
     rate_aed_to_usd: Optional[float]
     rate_aed_to_eur: Optional[float]
     rate_rub_to_usd: Optional[float]
-    created_at: datetime = Field(default_factory=datetime.now(datetime.timezone.utc))
+    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
     closed_at: Optional[datetime] = None
 
 # расходы

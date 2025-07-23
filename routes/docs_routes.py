@@ -1,45 +1,50 @@
-from fastapi import APIRouter, UploadFile, File, Form
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, UploadFile, Form, HTTPException
+from config import docs_collection
+from pathlib import Path
+import aiofiles
+import shutil
 from datetime import datetime
-import os, shutil
-
-from config import files_collection
-from models.file_model import FileMeta
 
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+BASE_DIR = Path.home() / "Documents" / "BN" / "JobFiles"
+BASE_DIR.mkdir(parents=True, exist_ok=True)
+
 
 @router.post("/upload")
-async def upload_file(
-    file: UploadFile = File(...),
-    work_id: str = Form(...),
-    file_type: str = Form(...)
+async def upload_document(
+    job_id: str = Form(...),
+    creator: str = Form(...),
+    worker_id: str = Form(...),
+    bn_number: str = Form(None),
+    status: str = Form(...),
+    file: UploadFile = None
 ):
-    # creation work's dir
-    file_path = os.path.join(UPLOAD_DIR, work_id)
-    os.makedirs(file_path, exist_ok=True)
+    if not file:
+        raise HTTPException(400, "File is required")
+    
+    job_folder = BASE_DIR / job_id
+    job_folder.mkdir(parents=True, exist_ok=True)
 
-    full_path = os.path.join(file_path, file.filename)
+    file_path = job_folder / file.filename
 
-    # save file
-    with open(full_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    async with aiofiles.open(file_path, "wb") as out_file:
+        content = await file.read()
+        await out_file.write(content)
 
-    # save Metadata to MongoDB
-    files_collection.insert_one({
-        "filename": file.filename,
-        "work_id": work_id,
-        "type": file_type,
+    doc = {
+        "job_id": job_id,
+        "name": file.filename,
         "upload_date": datetime.now(datetime.timezone.utc),
-        "path": full_path
-    })
+        "creator": creator,
+        "worker_id": worker_id,
+        "status": status,
+        "bn_number": bn_number,
+        "path": str(file_path)
+    }
 
-    return{"message": "File uploaded", "path": full_path}
+    docs_collection.insert_one(doc)
+    return {"message": "File uploaded", "path": str(file_path)}
 
-@router.get("/download/{work_id}/{filename}")
-async def download_file(work_id: str, filename: str):
-    file_path = os.path.join(UPLOAD_DIR, work_id, filename)
-    return FileResponse(file_path, media_type="application/octet-stream", filename=filename)
+
