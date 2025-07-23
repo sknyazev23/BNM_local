@@ -1,3 +1,22 @@
-venv/
-.env/
+# Python
 __pycache__
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+
+# FastAPI logs
+*.log
+
+# VS Code settings
+.vscode/
+
+# React
+node_modules/
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
