@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from models.job_model import Job, ExpensesItem, SaleItem
-from config import job_collection
+from config import jobs_collection, files_collection
 from bson import ObjectId
+import os
 
 
 router = APIRouter()
@@ -36,7 +37,7 @@ def get_job(job_id: str):
 # добавить расход
 @router.patch("/{job_id}/expenses")
 def add_expense(job_id: str, expense: ExpensesItem):
-    job = jobs_collecrtion.find_one({"job_id": job_id})
+    job = jobs_collection.find_one({"job_id": job_id})
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     if job["status"] == "closed":
@@ -44,7 +45,7 @@ def add_expense(job_id: str, expense: ExpensesItem):
     
     # Генерация ID для расхода
     expense.id = f"E{len(job.get('expenses_part', [])) + 1:03d}"
-    job_collection.update_one(
+    jobs_collection.update_one(
         {"job_id": job_id},
         {"$push": {"expenses_part": expense.model_dump()}}
     )
@@ -68,13 +69,25 @@ def add_sale(job_id: str, sale: SaleItem):
 
 # закрыть работу
 @router.patch("/{job_id}/close")
-def close_job(job_id: str):
-    job = jobs_collection.find_one({"job_id": job_id})
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+async def close_job(job_id: str):
+    result = jobs_collection.find_one(
+        {"job_id": job_id},
+        {"$set": {"status": "closed"}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Job not found or already closed")
     
-    jobs_collection.update_one({"job_id": job_id}, {"$set": {"status": "closed"}})
-    return {"message": "Job closed"}
+    # jobs_collection.update_one({"job_id": job_id}, {"$set": {"status": "closed"}})
+    return {"message": f"Job {job_id} closed successfully"}
+
+# Удалить работу
+@router.delete("/jobs/{job_id}")
+async def delete_job(job_id: str):
+    res = jobs_collection.delete_one({"job_id": job_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Job not found or already closed")
+    return {"message": f"Job {job_id} closed successfully"}
+
 
 # пересчет профита
 @router.post("/{job_id}/recalculate-profit")

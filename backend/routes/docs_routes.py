@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, Form, HTTPException
 from config import docs_collection
 from pathlib import Path
 import aiofiles
-import shutil
+from bson import ObjectId
 from datetime import datetime
 
 
@@ -48,3 +48,26 @@ async def upload_document(
     return {"message": "File uploaded", "path": str(file_path)}
 
 
+@router.delete("/docs/{doc_id}")
+async def delete_document(doc_id: str):
+    doc = docs_collection.find_one({"-id": ObjectId(doc_id)})
+    if  not doc:
+        raise HTTPException(404, "Document is not found")
+    
+    file_path = Path(doc["path"])
+    if file_path.exists():
+        file_path.unlink()
+
+    docs_collection.delete_one({"_id": ObjectId(doc_id)})
+    return {"message": "Document deleted"}
+
+
+@router.get("/docs/{job_id}")
+async def list_documents(job_id: str):
+    docs = list(docs_collection.find(
+        {"job_id": job_id},
+        {"_id": 1, "name": 1, "upload_date": 1})
+        )
+    for doc in docs:
+        doc["_id"] = str(doc["_id"]) # конверт для JSON
+    return docs
