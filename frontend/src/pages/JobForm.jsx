@@ -27,10 +27,10 @@ export default function JobForm() {
     const [paymentLocation, setPaymentLocation] = useState("");
     const [payerCompany, setPayerCompany] = useState("");
     const [expenses, setExpenses] = useState([]);
-    const [sales, setSales] = useState("");
+    const [sales, setSales] = useState([]);
     const [workers, setWorkers] = useState([]);
     const [showWorkerModal, setShowWorkerModal] = useState(false);
-    const [files, setFiles] = useState([]);
+    
 
     useEffect(() => {
         API.get("/workers").then((res) => setWorkers(res.data));
@@ -59,7 +59,6 @@ export default function JobForm() {
         setShowWorkerModal(false);
     };
 
-    const handleFileUpload = (newFiles) => setFiles([...files, ...newFiles]);
 
     const saveJob = async () => {
         const jobData = {
@@ -100,18 +99,18 @@ export default function JobForm() {
             <section className="mb-6">
                 <h3 className="text-xl font-semibold mb-4">Main Part</h3>
                 <div className="grid grid-cols-2 gap-4">
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Job ID" value={jobId} inChange={(e) => setJobId(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="BN Number" value={bnNumber} inChange={(e) => setBnNumber(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Refer BN" value={referBN} inChange={(e) => setReferBN(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Client" value={client} inChange={(e) => setClient(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Carrier" value={carrier} inChange={(e) => setCarrier(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Shipper" value={shipper} inChange={(e) => setShipper(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Consignee" value={consignee} inChange={(e) => setConsignee(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Commodity" value={commodity} inChange={(e) => setCommodity(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Quantity" value={quantity} inChange={(e) => setQuantity(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Weight" value={weight} inChange={(e) => setWeight(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Loading" value={portLoading} inChange={(e) => setPortLoading(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Discharge" value={portDischerge} inChange={(e) => setPortDischardge(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Job ID" value={jobId} onChange={(e) => setJobId(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="BN Number" value={bnNumber} onChange={(e) => setBnNumber(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Refer BN" value={referBN} onChange={(e) => setReferBN(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Client" value={client} onChange={(e) => setClient(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Carrier" value={carrier} onChange={(e) => setCarrier(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Shipper" value={shipper} onChange={(e) => setShipper(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Consignee" value={consignee} onChange={(e) => setConsignee(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Commodity" value={commodity} onChange={(e) => setCommodity(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Weight" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Loading" value={portLoading} onChange={(e) => setPortLoading(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Discharge" value={portDischerge} onChange={(e) => setPortDischardge(e.target.value)} />
                 </div>
             </section>
 
@@ -184,7 +183,13 @@ export default function JobForm() {
 
 
             {/* File Upload */}
-            <FileUpload onFilesAdded={handleFileUpload} />
+            {jobId && (
+                <section className="mb-6">
+                    <h3 className="text-xl font-semibold mb-2">Documents</h3>
+                    <FileUpload jobId={jobId} />
+                </section>
+            )}
+
 
 
             {/* Buttons */}

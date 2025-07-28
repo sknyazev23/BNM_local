@@ -50,7 +50,7 @@ async def upload_document(
 
 @router.delete("/docs/{doc_id}")
 async def delete_document(doc_id: str):
-    doc = docs_collection.find_one({"-id": ObjectId(doc_id)})
+    doc = docs_collection.find_one({"_id": ObjectId(doc_id)})
     if  not doc:
         raise HTTPException(404, "Document is not found")
     
