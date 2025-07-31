@@ -1,6 +1,7 @@
-import {useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Eye, ArrowUpDown } from "lucide-react";
 import API from "../api";
+import "../styles/dashboard.css";
 
 
 export default function Dashboard() {
@@ -33,6 +34,25 @@ export default function Dashboard() {
         setSortOrder(order);
         setFilteredJobs(sorted);
     };
+
+    const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+
+    const filtered = jobs.filter((job) => {
+        const jobId = job.job_id?.toLowerCase() || "";
+        const client = job.main_part?.client?.toLowerCase() || "";
+        const status = job.status?.toLowerCase() || "";
+        return (
+            jobId.includes(term) ||
+            client.includes(term) ||
+            status.includes(term)
+        );
+    });
+
+    setFilteredJobs(filtered);
+};
+
 
     return (
     <div className="flex w-full h-screen overflow-hidden">
