@@ -1,0 +1,105 @@
+/* Затемнение фона */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Основное окно */
+.modal-content {
+  background: linear-gradient(to bottom right, #2a2a2a, #1a1a1a);
+  color: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 66vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Заголовок */
+.modal-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Сетка полей */
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Поля ввода и селекты */
+.modal-grid input,
+.modal-grid select {
+  background-color: #1a1a1a;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-grid input::placeholder {
+  color: #888;
+}
+
+/* Нижняя панель с кнопками */
+.modal-footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Кнопки */
+.modal-footer button {
+  background: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+}
+
+.modal-footer button:hover {
+  background-color: #ffffff15;
+  transform: scale(1.05);
+}
+
+/* Дата в правом нижнем углу */
+.modal-date {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  font-size: 9px;
+  color: #aaa;
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

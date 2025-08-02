@@ -5,6 +5,9 @@ import ExpenseBlock from "../components/ExpenseBlock";
 import SaleBlock from "../components/SaleBlock";
 import ModalAddWorker from "../components/ModalAddWorker";
 import FileUpload from "../components/FileUpload";
+import AddExpenseModal from "../components/AddExpenseModal";
+import AddSaleModal from "../components/AddSaleModal";
+import "../styles/job.css";
 
 
 export default function JobForm() {
@@ -27,7 +30,11 @@ export default function JobForm() {
     const [paymentLocation, setPaymentLocation] = useState("");
     const [payerCompany, setPayerCompany] = useState("");
     const [expenses, setExpenses] = useState([]);
+    const [showExpenseModal, setShowExpenseModal] = useState(false);
+    const [currentExpense, setCurrentExpense] = useState(null);
     const [sales, setSales] = useState([]);
+    const [showSaleModal, setShowSaleModal] = useState(false);
+    const [currentSale, setCurrentSale] = useState(null);
     const [workers, setWorkers] = useState([]);
     const [showWorkerModal, setShowWorkerModal] = useState(false);
     
@@ -92,8 +99,8 @@ export default function JobForm() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto p-6 bg-gray-800 rounded-xl shadow-lg text-white">
-            <h2 className="text-3xl font-bold mb-6">Create NEW Job</h2>
+        <div className="job-form-wrapper">
+            <h2 className="job-title text-3xl font-bold mb-6">Create NEW Job</h2>
 
             {/* Секция 1: Main Part */}
             <section className="mb-6">
@@ -151,7 +158,10 @@ export default function JobForm() {
                     />
                 ))}
                 <button
-                    onClick={addExpense}
+                    onClick={() => {
+                        setCurrentExpense(null);       // создаём новый
+                        setShowExpenseModal(true);     // открываем окно
+                    }}
                     className="flex items-center gap-2 bg-green-600 px-4 py-2 rounded-lg text-white hover:bg-green-700 transform hover:scale-105 transition"
                 >
                 <Plus size={18} /> Add Expense
@@ -174,7 +184,10 @@ export default function JobForm() {
                     />    
                 ))}
                 <button
-                    onClick={addSale}
+                    onClick={() => {
+                        setCurrentSale(null);
+                        setShowSaleModal(true);
+                    }}
                     className="flex items-center gap-2 bg-purple-600 px-4 py-2 rounded-lg text-white hover:bg-purple-700 transform hover:scale-105 transition"
                 >
                 <Plus size={18} /> Add Sale
@@ -230,6 +243,30 @@ export default function JobForm() {
                     onAddWorker={handleAddWorker}
                 />
             )}
+
+            <AddExpenseModal
+                isOpen={showExpenseModal}
+                onClose={() => setShowExpenseModal(false)}
+                onSave={(newExpense) => {
+                    setExpenses([...expenses, newExpense]);
+                    setShowExpenseModal(false);
+                }}
+                workers={workers}
+                existingData={currentExpense}
+            />
+
+        {showSaleModal && (
+            <AddSaleModal
+                onClose={() => setShowSaleModal(false)}
+                onSave={(newSale) => {
+                    setSales([...sales, newSale]);
+                    setShowSaleModal(false);
+                }}
+                workers={workers}
+                existingSale={currentSale}
+            />
+        )}
+
         </div>
     );
 }

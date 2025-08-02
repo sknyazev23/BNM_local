@@ -1,0 +1,91 @@
+body {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+.job-form-wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+}
+
+
+h2, h3 {
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+input, select, textarea {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input::placeholder {
+  color: #888;
+}
+
+section {
+  margin-bottom: 24px;
+}
+
+button {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: #ffffff10;
+  transform: scale(1.03);
+}
+
+button svg {
+  stroke: #fff;
+}
+
+.flex {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.grid-2, .grid-3 {
+  display: grid;
+  gap: 12px;
+}
+
+.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.file-upload-wrapper {
+  border: 1px dashed #444;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.job-title {
+  text-align: right;
+}

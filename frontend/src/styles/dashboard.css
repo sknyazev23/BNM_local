@@ -1,21 +1,25 @@
-body {
+html, body, #root {
+  height: 100%;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #1e1e1e;
-  color: #f5f5f5;
+  background-color: oklab(20.451% 0.07573 -0.04314);
+  color: #4bfbbb;
 }
+
 
 .dashboard-wrapper {
   display: flex;
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  background-color: #2b2b2b;
 }
 
 .job-list-wrapper {
   overflow-y: auto;
   transition: width 0.3s ease;
   padding: 16px;
+  background-color: #2b2b2b;
 }
 
 .job-controls {
@@ -28,39 +32,27 @@ body {
 .job-buttons button {
   margin-right: 8px;
   padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
+  border: 1px solid white;
+  background-color: transparent;
+  color: white;
   font-weight: bold;
+  border-radius: 6px;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .job-buttons button:hover {
   transform: scale(1.05);
+  border-color: #00ffff; /* наводка — голубой контур */
+  color: #00ffff;
 }
 
-.job-buttons button:first-child {
-  background-color: #22c55e;
-  color: white;
-}
-.job-buttons button:nth-child(2) {
-  background-color: #eab308;
-  color: white;
-}
-.job-buttons button:nth-child(3) {
-  background-color: #ef4444;
-  color: white;
-}
-.job-buttons button:nth-child(4) {
-  background-color: #3b82f6;
-  color: white;
-}
 
 .search-input {
   padding: 8px;
   border-radius: 4px;
   border: none;
-  background-color: #2d2d2d;
+  background-color: #3a3a3a;
   color: white;
   outline: none;
 }
@@ -68,46 +60,51 @@ body {
 .job-table {
   width: 100%;
   border-collapse: collapse;
+  background-color: #2b2b2b;
 }
 
 .job-table th {
   text-align: left;
   padding: 8px;
-  background-color: #2a2a2a;
+  background-color: #3a3a3a;
   position: sticky;
   top: 0;
+  color: #f5f5f5;
 }
 
 .job-table td {
   padding: 8px;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid #555;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #e0e0e0;
 }
 
 .job-table tr:hover {
-  background-color: #333;
+  background-color: #444;
   cursor: pointer;
 }
 
 .job-details {
   width: 25%;
   padding: 16px;
-  background-color: #121212;
+  background-color: #3a3a3a;
   overflow-y: auto;
   height: 100vh;
   box-sizing: border-box;
-  border-left: 1px solid #333;
+  border-left: 1px solid #555;
 }
 
 .job-details h3 {
   font-size: 1.2rem;
   margin-bottom: 16px;
+  color: #ffffff;
 }
 
 .job-details div {
   margin-bottom: 12px;
   word-wrap: break-word;
   white-space: normal;
+  color: #ddd;
 }

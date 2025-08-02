@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from models.job_model import Job, ExpensesItem, SaleItem
-from config import jobs_collection, files_collection
+from config import jobs_collection
 from bson import ObjectId
 import os
 

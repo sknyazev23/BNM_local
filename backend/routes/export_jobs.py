@@ -4,13 +4,13 @@ from config import jobs_collection, workers_collection
 from datetime import datetime
 from pathlib import Path
 import openpyxl
-from openpyxl.sttyles import Font, Aligement
+from openpyxl.styles import Font, Alignment
 
 
 router = APIRouter()
 
 EXPORT_PATH = Path.home() /"Documents" / "BN" / "Exports"
-EXPORT_PATH.mrdir(parents=True, exist_ok=True)
+EXPORT_PATH.mkdir(parents=True, exist_ok=True)
 
 @router.get("/jobs/export")
 def export_jobs(
