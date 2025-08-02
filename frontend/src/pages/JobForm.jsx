@@ -146,7 +146,7 @@ export default function JobForm() {
             {/* Expenses */}
             <section className="mb-6">
                 <h3 className="text-xl font-semibold mb-2">Expenses</h3>
-                {expenses.map((expenses, index) => (
+                {expenses.map((expense, index) => (
                     <ExpenseBlock
                         key={index}
                         expense={expense}
@@ -244,6 +244,7 @@ export default function JobForm() {
                 />
             )}
 
+            {showExpenseModal && (
             <AddExpenseModal
                 isOpen={showExpenseModal}
                 onClose={() => setShowExpenseModal(false)}
@@ -254,8 +255,9 @@ export default function JobForm() {
                 workers={workers}
                 existingData={currentExpense}
             />
+            )}
 
-        {showSaleModal && (
+            {showSaleModal && (
             <AddSaleModal
                 onClose={() => setShowSaleModal(false)}
                 onSave={(newSale) => {

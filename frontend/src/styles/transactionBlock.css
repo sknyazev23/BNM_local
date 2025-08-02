@@ -1,0 +1,56 @@
+.transaction-block {
+  background-color: #2a2a2a;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.transaction-block h4 {
+  font-size: 1.125rem;
+  margin-bottom: 8px;
+}
+
+.transaction-block .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.transaction-block input,
+.transaction-block select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #1a1a1a;
+  color: #fff;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.transaction-block input::placeholder {
+  color: #888;
+}
+
+.transaction-block .worker-select {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.transaction-block .add-worker-button {
+  background-color: transparent;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: 0.2s ease;
+  cursor: pointer;
+}
+
+.transaction-block .add-worker-button:hover {
+  background-color: #ffffff10;
+  transform: scale(1.05);
+}

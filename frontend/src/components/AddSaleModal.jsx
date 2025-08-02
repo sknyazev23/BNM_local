@@ -51,9 +51,9 @@ export default function AddSaleModal({ onClose, onSave, workers, existingSale })
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Add Sale</h2>
+        <h3 className="modal-title">Add Salee</h3>
 
-        <div className="modal-fields">
+        <div className="modal-grid">
           <input placeholder="№" value={saleData.number} onChange={e => handleChange("number", e.target.value)} />
           <input placeholder="Sale description" value={saleData.description} onChange={e => handleChange("description", e.target.value)} />
           <input type="number" placeholder="Quantity" value={saleData.quantity} onChange={e => handleChange("quantity", parseInt(e.target.value))} />

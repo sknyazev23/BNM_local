@@ -41,7 +41,9 @@ button {
   background-color: transparent;
   color: #ffffff;
   border: 1px solid #ffffff;
+  margin: 16px 200px 5px 20px;
   padding: 8px 12px;
+  gap: 12px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -89,3 +91,4 @@ textarea {
 .job-title {
   text-align: right;
 }
+

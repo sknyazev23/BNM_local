@@ -59,10 +59,10 @@
 
 /* Нижняя панель с кнопками */
 .modal-footer {
-  margin-top: 24px;
+  margin-top: 16px;
   display: flex;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 1px;
   flex-wrap: wrap;
 }
 
@@ -71,11 +71,12 @@
   background: transparent;
   color: white;
   border: 1px solid white;
-  padding: 8px 14px;
+  padding: 8px 5px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+  width: auto;
+  min-width: 100px;
 }
 
 .modal-footer button:hover {
