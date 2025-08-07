@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Eye, ArrowUpDown, UserPlus } from "lucide-react";
 import API from "../api";
@@ -14,6 +15,11 @@ export default function Dashboard() {
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showWorkerModal, setShowWorkerModal] = useState(false);
+  const navigate = useNavigate();
+
+  const navigateToClients = () => {
+    navigate('/clients');
+  };
 
   useEffect(() => {
     fetchJobs();
@@ -72,18 +78,24 @@ export default function Dashboard() {
       <div className={`job-list ${selectedJob ? "narrow" : ""}`}>
         <div className="job-controls">
           <div className="job-buttons">
+
             <button className="create">
               <Plus size={16} /> Create
             </button>
+
             <button className="edit">
               <Pencil size={16} /> Edit
             </button>
+
             <button className="delete">
               <Trash2 size={16} /> Delete
             </button>
+
             <button className="open">
               <Eye size={16} /> Open
             </button>
+
+            <button onClick={navigateToClients}>Clients</button>
             
             <button className="add-worker"
               onClick={() => setShowWorkerModal(true)}
@@ -167,6 +179,8 @@ export default function Dashboard() {
           </div>
         </div>  
       )}
+
+
     </div>
   );
 }
