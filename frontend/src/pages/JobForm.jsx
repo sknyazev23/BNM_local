@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Plus, Save } from "lucide-react";
 import API from "../api";
 import ExpenseBlock from "../components/ExpenseBlock";
-import SaleBlock from "../components/SaleBlock";
+
 import ModalAddWorker from "../components/ModalAddWorker";
 import FileUpload from "../components/FileUpload";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
+import TransactionHeader from "../components/TransactionHeader";
 import "../styles/job.css";
 
 
@@ -135,9 +136,9 @@ export default function JobForm() {
             <section className="mb-6">
                 <h3 className="text-xl font-semibold mb-4">Payment</h3>
                 <div className="grid grid-cols-3 gap-4">
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Payment Terms" value={paymentTerms} inChange={(e) => setPaymentTerms(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Payment Location" value={paymentLocation} inChange={(e) => setPaymentLocation(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Payer Company" value={payerCompany} inChange={(e) => setPayerCompany(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Payment Terms" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Payment Location" value={paymentLocation} onChange={(e) => setPaymentLocation(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Payer Company" value={payerCompany} onChange={(e) => setPayerCompany(e.target.value)} />
                 </div>
             </section>
 
@@ -145,52 +146,61 @@ export default function JobForm() {
 
             {/* Expenses */}
             <section className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">Expenses</h3>
+               <h3 className="text-xl font-semibold mb-2">Expenses</h3>
+
+                <TransactionHeader isExpense={true} />
+
                 {expenses.map((expense, index) => (
                     <ExpenseBlock
-                        key={index}
-                        expense={expense}
-                        index={index}
-                        onChange={handleExpenseChange}
-                        onRemove={removeExpense}
-                        workers={workers}
-                        onAddWorker={() => setShowWorkerModal(true)}
+                    key={index}
+                    expense={expense}
+                    index={index}
+                    onRemove={removeExpense}
+                    onEdit={(i) => {
+                        setCurrentExpense(i);
+                        setShowExpenseModal(true);
+                    }}
                     />
                 ))}
-                <button
+
+                <button type="button"
                     onClick={() => {
-                        setCurrentExpense(null);       // создаём новый
-                        setShowExpenseModal(true);     // открываем окно
+                    setCurrentExpense(null);
+                    setShowExpenseModal(true);
                     }}
                     className="flex items-center gap-2 bg-green-600 px-4 py-2 rounded-lg text-white hover:bg-green-700 transform hover:scale-105 transition"
                 >
-                <Plus size={18} /> Add Expense
+                    <Plus size={18} /> Add Expense
                 </button>
             </section>
 
 
             {/* Sales */}
             <section className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Sale</h3>
+                <h3 className="text-lg font-semibold mb-2">Sales</h3>
+
+                <TransactionHeader isExpense={false} />
+
                 {sales.map((sale, index) => (
                     <SaleBlock
-                        key={index}
-                        sale={sale}
-                        index={index}
-                        onChange={handleSaleChange}
-                        onRemove={removeSale}
-                        workers={workers}
-                        onAddWorker={() => setShowWorkerModal(true)}
-                    />    
+                    key={index}
+                    sale={sale}
+                    index={index}
+                    onRemove={removeSale}
+                    onChange={handleSaleChange}
+                    workers={workers}
+                    onAddWorker={() => setShowWorkerModal(true)}
+                    />
                 ))}
-                <button
+
+                <button type="button"
                     onClick={() => {
-                        setCurrentSale(null);
-                        setShowSaleModal(true);
+                    setCurrentSale(null);
+                    setShowSaleModal(true);
                     }}
                     className="flex items-center gap-2 bg-purple-600 px-4 py-2 rounded-lg text-white hover:bg-purple-700 transform hover:scale-105 transition"
                 >
-                <Plus size={18} /> Add Sale
+                    <Plus size={18} /> Add Sale
                 </button>
             </section>
 
@@ -214,7 +224,7 @@ export default function JobForm() {
                 <Save size={18} /> Save
                 </button>
 
-                <button
+                <button type="button"
                 onClick={async () => {
                     if (confirm("BROTIK, Are you SURE?")) {
                         await API.delete(`/jobs/${jobId}`);
@@ -226,7 +236,7 @@ export default function JobForm() {
                     Delete Job
                 </button>
 
-                <button
+                <button type="button"
                 onClick={async () => {
                     await API.patch(`/jobs/${jobId}/close`);
                     alert("Job is close.");
@@ -237,25 +247,25 @@ export default function JobForm() {
                 </button>
             </div>
             
-            {showWorkerModal && (
-                <ModalAddWorker
-                    onClose={() => setShowWorkerModal(false)}
-                    onAddWorker={handleAddWorker}
+            {showExpenseModal && (
+                <AddExpenseModal
+                    isOpen={true}
+                    onClose={() => setShowExpenseModal(false)}
+                    onSave={(newExpense) => {
+                        if (currentExpense !== null) {
+                            const updated = [...expenses];
+                            updated[currentExpense] = newExpense;
+                            setExpenses(updated);
+                        } else {
+                            setExpenses([...expenses, newExpense]);
+                        }
+                        setShowExpenseModal(false);
+                    }}
+                    workers={workers}
+                    existingData={currentExpense !== null ? expenses[currentExpense] : {}}
                 />
             )}
 
-            {showExpenseModal && (
-            <AddExpenseModal
-                isOpen={showExpenseModal}
-                onClose={() => setShowExpenseModal(false)}
-                onSave={(newExpense) => {
-                    setExpenses([...expenses, newExpense]);
-                    setShowExpenseModal(false);
-                }}
-                workers={workers}
-                existingData={currentExpense}
-            />
-            )}
 
             {showSaleModal && (
             <AddSaleModal
@@ -267,7 +277,7 @@ export default function JobForm() {
                 workers={workers}
                 existingSale={currentSale}
             />
-        )}
+        )}ты
 
         </div>
     );

@@ -1,56 +1,55 @@
-.transaction-block {
-  background-color: #2a2a2a;
-  padding: 16px;
+.expense-wrapper {
+  background-color: #2e2e2e;
+  color: white;
   border-radius: 8px;
-  margin-bottom: 16px;
-  color: #fff;
-}
-
-.transaction-block h4 {
-  font-size: 1.125rem;
-  margin-bottom: 8px;
-}
-
-.transaction-block .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 12px;
   margin-bottom: 12px;
+  overflow-x: auto;
 }
 
-.transaction-block input,
-.transaction-block select {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #555;
-  background-color: #1a1a1a;
-  color: #fff;
-  margin-bottom: 8px;
-  box-sizing: border-box;
-}
-
-.transaction-block input::placeholder {
-  color: #888;
-}
-
-.transaction-block .worker-select {
+.expense-header-row,
+.expense-value-row {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
-.transaction-block .add-worker-button {
-  background-color: transparent;
-  border: 1px solid #ffffff;
-  color: #ffffff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: 0.2s ease;
+.expense-cell {
+  min-width: 100px;
+  flex: 1;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.expense-header-row .expense-cell {
+  font-weight: 600;
+  color: #bbbbbb;
+  font-size: 0.8rem;
+}
+
+.action-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 40px;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  color: #ff5e5e;
   cursor: pointer;
+  padding: 2px;
+  transition: transform 0.2s ease;
 }
 
-.transaction-block .add-worker-button:hover {
-  background-color: #ffffff10;
-  transform: scale(1.05);
+.icon-button:hover {
+  transform: scale(1.1);
+}
+
+.icon-button:first-child {
+  color: #00bfff; /* голубой для Edit */
 }

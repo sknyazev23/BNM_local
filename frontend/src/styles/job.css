@@ -9,13 +9,13 @@ body {
   max-width: 1000px;
   margin: 0 auto;
   padding: 24px;
-  background-color: #2a2a2a;
+  background-color: #0c767b;
   border-radius: 8px;
 }
 
 
 h2, h3 {
-  color: #ffffff;
+  color: #073231;
   margin-bottom: 16px;
 }
 
@@ -92,3 +92,20 @@ textarea {
   text-align: right;
 }
 
+/* Исправление выезда строк за пределы формы */
+.expense-row, .sale-row {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* по количеству колонок */
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.expense-row > *, .sale-row > * {
+  overflow-wrap: break-word;
+}
+
+/* Чтобы всё, что внутри формы, не могло «вылезти» */
+.job-form-wrapper {
+  overflow-x: hidden;
+}

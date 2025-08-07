@@ -21,7 +21,7 @@
   width: 66vw;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 20px rgba(56, 221, 199, 0.05);
   position: relative;
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -31,13 +31,20 @@
   font-size: 24px;
   margin-bottom: 20px;
   text-align: center;
+  color: white;
 }
 
 /* Сетка полей */
 .modal-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
+  grid-template-columns: 1fr; /* по умолчанию 1 колонка */
+}
+
+@media (min-width: 768px) {
+  .modal-grid {
+    grid-template-columns: 1fr 1fr; /* на широких экранах — 2 колонки */
+  }
 }
 
 /* Поля ввода и селекты */
@@ -62,7 +69,7 @@
   margin-top: 16px;
   display: flex;
   justify-content: flex-start;
-  gap: 1px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -71,11 +78,10 @@
   background: transparent;
   color: white;
   border: 1px solid white;
-  padding: 8px 5px;
+  padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  width: auto;
   min-width: 100px;
 }
 

@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Eye, ArrowUpDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, ArrowUpDown, UserPlus } from "lucide-react";
 import API from "../api";
 import "../styles/dashboard.css";
+import "../styles/modal.css";
+import ModalAddWorker from "../components/ModalAddWorker";
+
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState([]);
@@ -10,6 +13,7 @@ export default function Dashboard() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [showWorkerModal, setShowWorkerModal] = useState(false);
 
   useEffect(() => {
     fetchJobs();
@@ -52,8 +56,18 @@ export default function Dashboard() {
     setFilteredJobs(filtered);
   };
 
+  const handleAddWorker = async (newWorker) => {
+    console.log("Worker saved: ", newWorker);
+    setShowWorkerModal(false);
+
+    // автоподгрузка
+    await fetchJobs();
+  };
+
+
   return (
     <div className="dashboard">
+
       {/* Список работ */}
       <div className={`job-list ${selectedJob ? "narrow" : ""}`}>
         <div className="job-controls">
@@ -70,6 +84,14 @@ export default function Dashboard() {
             <button className="open">
               <Eye size={16} /> Open
             </button>
+            
+            <button className="add-worker"
+              onClick={() => setShowWorkerModal(true)}
+            >
+            <UserPlus size={16} /> Add Worker
+     
+            </button>
+
           </div>
 
           <div className="search-section">
@@ -132,6 +154,18 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Модалка добавления работника */}
+      {showWorkerModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <ModalAddWorker
+              onClose={() => setShowWorkerModal(false)}
+              onAddWorker={handleAddWorker}
+              />
+          </div>
+        </div>  
       )}
     </div>
   );

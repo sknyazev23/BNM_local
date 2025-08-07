@@ -2,8 +2,8 @@ html, body, #root {
   height: 100%;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: oklab(20.451% 0.07573 -0.04314);
-  color: #4bfbbb;
+  background-color: oklab(46.174% -0.08106 -0.00143);
+  color: #17a7ac;
 }
 
 
@@ -40,6 +40,7 @@ html, body, #root {
   cursor: pointer;
   transition: all 0.2s ease;
 }
+
 
 .job-buttons button:hover {
   transform: scale(1.05);
