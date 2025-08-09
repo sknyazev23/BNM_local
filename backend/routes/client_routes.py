@@ -1,21 +1,25 @@
 from fastapi import APIRouter, HTTPException
-from models.client_model import Client
+from models.client_model import ClientIn
 from config import clients_collection
+from bson import ObjectId
 
 
-router = APIRouter()
+router = APIRouter(tags=["Clients"])
 
 @router.get("/")
-def get_all_clients():
-    clients = list(clients_collection.find())
-    for c in clients:
-        c["_id"] = str(c["_id"])
-    return clients
+def get_clients():
+    items = list(clients_collection.find())
+    for it in items:
+        it["_id"] = str(it["_id"])
+    return items
 
+@router.post("/", status_code=201)
+def create_client(payload: ClientIn):
+    doc = payload.model_dump()
+    res = clients_collection.insert_one(doc)
+    if not res.inserted_id:
+        raise HTTPException(500, "Failed to insert client")
 
-@router.post("/")
-def create_client(client: Client):
-    if clients_collection.find_one({"id": client.id}):
-        raise HTTPException(400, "Client already exist")
-    clients_collection.insert_one(client.model_dump())
-    return {"message": "Client added", "client_id": client.id}
+    saved = clients_collection.find_one({"_id": res.inserted_id})
+    saved["_id"] = str(saved["_id"])
+    return saved

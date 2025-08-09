@@ -1,20 +1,103 @@
-
-.clients-page {
-  padding: 20px;
-  background-color: #1e1e1e;
-  color: white;
+.clients-page-wrapper {
   height: 100vh;
-  box-sizing: border-box;
+  overflow: hidden;
+  background-color: #149075;
+  font-family: sans-serif;
+}
+
+.clients-fixed-header {
+  position: sticky;
+  top: 0;
+  background-color: #50e3c2;
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  gap: 20px;
 }
 
 .clients-title {
-  font-size: 28px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 10px;
+  text-align: right;
+  padding: 22px 22px;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
 }
 
-.clients-placeholder {
-  color: #aaa;
-  font-style: italic;
+.clients-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+
+}
+
+.buttons {
+  padding: 6px 12px;
+  border: 1px solid white;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.clients-table {
+  height: calc(100vh - 90px);
+  overflow-y: auto;
+  padding: 0 40px 40px;
+}
+
+.clients-table-header {
+  display: grid;
+  grid-template-columns: 50px 150px 150px 120px 180px 100px 120px 150px 100px;
+  position: sticky;
+  top: 70px;
+  background-color: #50e3c2;
+  font-weight: 600;
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 5;
+}
+
+.clients-table-header span {
+  color: #1a1a1a;
+  font-size: 13px;
+}
+
+.clients-table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.client-row {
+  display: grid;
+  grid-template-columns: 50px 150px 150px 120px 180px 100px 120px 150px 100px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.client-row span {
+  font-size: 13px;
+  color: #333;
+}
+
+.client-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
 }
