@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, Save } from "lucide-react";
 import API from "../api";
 import ExpenseBlock from "../components/ExpenseBlock";
+import ClientSelect from "../components/ClientSelect";
 
 import ModalAddWorker from "../components/ModalAddWorker";
 import FileUpload from "../components/FileUpload";
@@ -23,7 +24,7 @@ export default function JobForm() {
     const [quantity, setQuantity] = useState("");
     const [weight, setWeight] = useState("");
     const [portLoading, setPortLoading] = useState("");
-    const [portDischerge, setPortDischardge] = useState("");
+    const [portDischarge, setPortDischardge] = useState("");
     const [rateAEDUSD, setRateAEDUSD] = useState(0);
     const [rateRUBUSD, setRateRUBUSD] = useState(0);
     const [rateAEDEUR, setRateAEDEUR] = useState(0);
@@ -44,8 +45,8 @@ export default function JobForm() {
         API.get("/workers").then((res) => setWorkers(res.data));
     }, []);
 
-    const addExpense = () => setExpenses([...expenses, { description: "", const: { USD: 0 }, worker: ""}]);
-    const addSale = () => setSales([...sales, { description: "", const: { USD: 0 }, worker: ""}]);
+    const addExpense = () => setExpenses([...expenses, { description: "", cost: { USD: 0 }, worker: ""}]);
+    const addSale = () => setSales([...sales, { description: "", cost: { USD: 0 }, worker: ""}]);
 
     const handleExpenseChange = (index, field, value) => {
         const updated = [...expenses];
@@ -110,7 +111,8 @@ export default function JobForm() {
                     <input className="bg-gray-700 p-2 rounded" placeholder="Job ID" value={jobId} onChange={(e) => setJobId(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="BN Number" value={bnNumber} onChange={(e) => setBnNumber(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Refer BN" value={referBN} onChange={(e) => setReferBN(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Client" value={client} onChange={(e) => setClient(e.target.value)} />
+                    
+                    <ClientSelect value={client} onChange={setClient} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Carrier" value={carrier} onChange={(e) => setCarrier(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Shipper" value={shipper} onChange={(e) => setShipper(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Consignee" value={consignee} onChange={(e) => setConsignee(e.target.value)} />
@@ -118,7 +120,7 @@ export default function JobForm() {
                     <input className="bg-gray-700 p-2 rounded" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Weight" value={weight} onChange={(e) => setWeight(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Port of Loading" value={portLoading} onChange={(e) => setPortLoading(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Discharge" value={portDischerge} onChange={(e) => setPortDischardge(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Discharge" value={portDischarge} onChange={(e) => setPortDischardge(e.target.value)} />
                 </div>
             </section>
 
@@ -138,7 +140,7 @@ export default function JobForm() {
                 <div className="grid grid-cols-3 gap-4">
                     <input className="bg-gray-700 p-2 rounded" placeholder="Payment Terms" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Payment Location" value={paymentLocation} onChange={(e) => setPaymentLocation(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Payer Company" value={payerCompany} onChange={(e) => setPayerCompany(e.target.value)} />
+                    <ClientSelect placeholder="Payer Company" value={payerCompany} onChange={setPayerCompany} />
                 </div>
             </section>
 
@@ -277,7 +279,7 @@ export default function JobForm() {
                 workers={workers}
                 existingSale={currentSale}
             />
-        )}ты
+        )}
 
         </div>
     );
