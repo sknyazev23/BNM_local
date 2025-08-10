@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import EditClientModal from "../components/EditClientModal";
 import ClientAddModal from "../components/ClientAddModal";
+import { exportClientsToExcel } from "../utils/exportClientsExcel";
 import "../styles/clients.css";
 import API from "../api";
 
@@ -23,6 +24,8 @@ export default function ClientsPage() {
     const res = await API.get("/clients");
     setClients(res.data);
   };
+
+  const handleExportExcel = () => exportClientsToExcel(clients);
 
     // универсальный UPDATE с fallback'ами
   const updateClient = async (id, payload) => {
@@ -117,6 +120,11 @@ export default function ClientsPage() {
           <button className="buttons" onClick={() => setShowAddModal(true)}>
             <Plus size={16} /> Add New Client
           </button>
+
+          <button className="buttons" onClick={handleExportExcel}>
+            Export to Excel
+          </button>
+
           <button className="buttons" onClick={() => navigate("/dashboard")}>Close</button>
         </div>
         <h2 className="clients-title">Clients</h2>
