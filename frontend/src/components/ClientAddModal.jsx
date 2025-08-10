@@ -3,10 +3,12 @@ import '../styles/modal.css';
 
 export default function ClientAddModal({ onClose, onAddClient }) {
   const [name, setName] = useState('');
+  const [vat, setVat] = useState('');
   const [contactPerson, setContactPerson] = useState('');
-  const [inn, setInn] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [country, setCountry] = useState('');
+  const [note, setNote] = useState('');
 
   const handleSave = () => {
     if (!name.trim() || !contactPerson.trim()) {
@@ -16,10 +18,12 @@ export default function ClientAddModal({ onClose, onAddClient }) {
 
     const newClient = {
       name,
+      vat: vat || null,
       contact_person: contactPerson,
-      inn: inn || null,
       phone: phone || null,
       email: email || null,
+      country: country || null,
+      note: note || null,
     };
 
     onAddClient(newClient);
@@ -38,24 +42,35 @@ export default function ClientAddModal({ onClose, onAddClient }) {
             onChange={(e) => setName(e.target.value)}
           />
           <input
-            placeholder="Contact Person *"
+            placeholder="VAT"
+            value={vat}
+            onChange={(e) => setVat(e.target.value)}
+          />
+          <input
+            placeholder="Contact Person"
             value={contactPerson}
             onChange={(e) => setContactPerson(e.target.value)}
           />
-          <input
-            placeholder="INN"
-            value={inn}
-            onChange={(e) => setInn(e.target.value)}
-          />
+          
           <input
             placeholder="Phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
           <input
-            placeholder="Email"
+            placeholder="e_Mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            placeholder="Country"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+          />
+          <input
+            placeholder="note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
           />
         </div>
 
