@@ -62,7 +62,7 @@ export function onlyPositiveDecimal4(e) {
   }
 }
 
-// Полный запрет вставки
+
 export function blockPaste(e) {
   e.preventDefault();
 }

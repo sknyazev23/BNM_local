@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { Plus, Save } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Save, Edit2, Trash2 } from "lucide-react";
+import { toAED } from "../utils/currency";
 import API from "../api";
-import ExpenseBlock from "../components/ExpenseBlock";
+import { format4 } from "../utils/numberFormat";
 import ClientSelect from "../components/ClientSelect";
 
-import ModalAddWorker from "../components/ModalAddWorker";
+
 import FileUpload from "../components/FileUpload";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
@@ -39,6 +40,14 @@ export default function JobForm() {
     const [showSaleModal, setShowSaleModal] = useState(false);
     const [currentSale, setCurrentSale] = useState(null);
     const [workers, setWorkers] = useState([]);
+    const workerNameMap = useMemo(() => {
+        const m = {};
+        for (const w of workers) {
+            const id = w.id ?? w._id;
+            if (id != null) m[id] = w.name ?? String(id);
+        }
+        return m;
+    }, [workers]);
     const [showWorkerModal, setShowWorkerModal] = useState(false);
     
 
@@ -170,9 +179,6 @@ export default function JobForm() {
                             />
                         </label>
                     </div>
-
-
-
             </section>
 
             {/* Section 3: Payment */}
@@ -186,35 +192,70 @@ export default function JobForm() {
             </section>
 
 
-
             {/* Expenses */}
             <section className="mb-6">
                <h3 className="text-xl font-semibold mb-2">Expenses</h3>
 
                 <TransactionHeader isExpense={true} />
 
-                {expenses.map((expense, index) => (
-                    <ExpenseBlock
-                    key={index}
-                    expense={expense}
-                    index={index}
-                    onRemove={removeExpense}
-                    onEdit={(i) => {
-                        setCurrentExpense(i);
-                        setShowExpenseModal(true);
-                    }}
-                    />
-                ))}
+                <div className="expenses-cards">
 
-                <button type="button"
-                    onClick={() => {
-                    setCurrentExpense(null);
-                    setShowExpenseModal(true);
-                    }}
-                    className="flex items-center gap-2 bg-green-600 px-4 py-2 rounded-lg text-white hover:bg-green-700 transform hover:scale-105 transition"
+                {expenses.map((expense, i) => {
+                    const qty  = Number(expense.quantity ?? expense.qty ?? 0);
+                    const unit = Number(expense.unit_cost ?? 0);
+                    const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
+                    const currency = expense.currency || "USD";
+                    const amountAED = toAED(amount, currency, {
+                        AED_to_USD: rateAEDUSD,
+                        RUB_to_USD: rateRUBUSD,
+                        AED_to_EUR: rateAEDEUR,
+                    });
+
+                    return (
+                        <div className="expense-card-row" key={i}>
+                        <span className="ex-cell num">{i + 1}</span>
+                        <span className="ex-cell desc">{expense.description || "—"}</span>
+                        <span className="ex-cell">{qty}</span>
+                        <span className="ex-cell">{format4(unit)}</span>
+                        <span className="ex-cell">{format4(amount)}</span>
+                        <span className="ex-cell">{currency}</span>
+                        <span className="ex-cell">{format4(amountAED)}</span>
+                        <span className="ex-cell">{expense.seller || "—"}</span>
+                        <span className="ex-cell">
+                            {expense.worker ? (workerNameMap[expense.worker] ?? expense.worker) : "—"}</span>
+
+                        <div className="ex-actions-col">
+                            <button
+                                type="button"
+                                className="ex-action-btn"
+                                title="Edit"
+                                onClick={() => { setCurrentExpense(i); setShowExpenseModal(true); }}
+                            >
+                            <Edit2 size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                className="ex-action-btn danger"
+                                title="Delete"
+                                onClick={() => removeExpense(i)}
+                            >
+                            <Trash2 size={16} />
+                            </button>
+                        </div>
+                        </div>
+                    );
+                    })}
+                </div>
+
+                <button
+                    type="button"
+                    onClick={() => { setCurrentExpense(null); setShowExpenseModal(true); }}
+                    className="bn-btn"
                 >
                     <Plus size={18} /> Add Expense
                 </button>
+
+
             </section>
 
 
@@ -241,7 +282,7 @@ export default function JobForm() {
                     setCurrentSale(null);
                     setShowSaleModal(true);
                     }}
-                    className="flex items-center gap-2 bg-purple-600 px-4 py-2 rounded-lg text-white hover:bg-purple-700 transform hover:scale-105 transition"
+                    className="bn-btn"
                 >
                     <Plus size={18} /> Add Sale
                 </button>

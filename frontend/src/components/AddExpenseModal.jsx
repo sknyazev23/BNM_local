@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import API from "../api";
 import "../styles/modal.css";
 
@@ -6,6 +6,15 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
+
+  // пересчет для Amount
+  const amount = useMemo(() => {
+    const q = parseFloat(formData.quantity) || 0;
+    const u = parseFloat(formData.unit_cost) || 0;
+    const res = q*u;
+    return Number.isFinite(res) ? res : 0;
+  }, [formData.quantity, formData.unit_cost]);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -30,7 +39,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   // Сохранение
   const handleSave = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({ ...formData, amount });
     setIsEdited(false);
   };
 
@@ -38,7 +47,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   const handleClose = () => {
     if (isEdited) {
       if (confirm("Save changes before closing?")) {
-        onSave(formData);
+        onSave({ ...formData, amount });
       }
     }
     onClose();
@@ -57,7 +66,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
             <input placeholder="Cost description" value={formData.description || ""} onChange={(e) => handleChange("description", e.target.value)} />
             <input placeholder="Quantity" type="number" value={formData.quantity || ""} onChange={(e) => handleChange("quantity", parseFloat(e.target.value) || 0)} />
             <input placeholder="Cost per unit" type="number" value={formData.unit_cost || ""} onChange={(e) => handleChange("unit_cost", parseFloat(e.target.value) || 0)} />
-            <input placeholder="Amount" type="number" value={formData.amount || ""} onChange={(e) => handleChange("amount", parseFloat(e.target.value) || 0)} />
+            <input placeholder="Amount" type="text" value={amount.toFixed(4)} readOnly />
 
             <select value={formData.currency || ""} onChange={(e) => handleChange("currency", e.target.value)}>
               <option value="">Currency</option>
@@ -67,7 +76,6 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
               <option value="EUR">EUR</option>
             </select>
 
-            <input placeholder="Amount in AED" type="number" value={formData.amount_aed || ""} onChange={(e) => handleChange("amount_aed", parseFloat(e.target.value) || 0)} />
             <input placeholder="Seller" value={formData.seller || ""} onChange={(e) => handleChange("seller", e.target.value)} />
 
             <select value={formData.worker || ""} onChange={(e) => handleChange("worker", e.target.value)}>
