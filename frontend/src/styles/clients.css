@@ -32,14 +32,15 @@ html,body{ height:100%; margin:0; }
   position:sticky; top:0; z-index:20;
   display:grid; grid-template-columns:1fr auto; align-items:center; column-gap:16px;
   height:var(--header-h); padding:12px var(--pad-x);
-  background:linear-gradient(0deg,var(--panel),var(--panel-2));
+  /*background:linear-gradient(0deg,var(--panel),var(--panel-2));*/
+  background: linear-gradient(135deg, #7aebf1, #4b5757);
   border-bottom:1px solid var(--border);
 }
 .clients-actions{ display:inline-flex; gap:10px; align-items:center; }
 .buttons{
-  padding:8px 14px; border:1px solid var(--accent); background:transparent;
+  padding:8px 14px; border:1px solid var(--bg); background:transparent;
   color:var(--text); border-radius:8px; cursor:pointer; font-size:14px;
-  display:inline-flex; align-items:center; gap:8px;
+  display:inline-flex; align-items:center; gap:2px;
   transition:background-color .15s ease, transform .05s ease;
 }
 .buttons:hover{ background:rgba(45,212,191,.12); }
@@ -168,9 +169,11 @@ html,body{ height:100%; margin:0; }
   position: fixed;
   bottom: 12px;
   left: var(--pad-x);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--muted);
 }
+
+
 
 .icon-btn:hover{ background:rgba(45,212,191,.18); color:var(--accent-strong); }
 .icon-btn:active{ transform:translateY(1px); }

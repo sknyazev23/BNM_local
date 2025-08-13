@@ -9,6 +9,7 @@ import FileUpload from "../components/FileUpload";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
 import TransactionHeader from "../components/TransactionHeader";
+import { validateNonNegativeTwoDecimals, onlyPositiveDecimal4, blockPaste, decimal4Blur, decimal4Change } from "../utils/numberValidation";
 import "../styles/job.css";
 
 
@@ -25,9 +26,9 @@ export default function JobForm() {
     const [weight, setWeight] = useState("");
     const [portLoading, setPortLoading] = useState("");
     const [portDischarge, setPortDischardge] = useState("");
-    const [rateAEDUSD, setRateAEDUSD] = useState(0);
-    const [rateRUBUSD, setRateRUBUSD] = useState(0);
-    const [rateAEDEUR, setRateAEDEUR] = useState(0);
+    const [rateAEDUSD, setRateAEDUSD] = useState("3.6700");
+    const [rateRUBUSD, setRateRUBUSD] = useState("");
+    const [rateAEDEUR, setRateAEDEUR] = useState("");
     const [paymentTerms, setPaymentTerms] = useState("");
     const [paymentLocation, setPaymentLocation] = useState("");
     const [payerCompany, setPayerCompany] = useState("");
@@ -83,7 +84,7 @@ export default function JobForm() {
                 quantity,
                 weight,
                 port_loading: portLoading,
-                port_discharge: portDischerge,
+                port_discharge: portDischarge,
                 rates: {
                     AED_to_USD: rateAEDUSD,
                     RUB_to_USD: rateRUBUSD,
@@ -117,8 +118,12 @@ export default function JobForm() {
                     <input className="bg-gray-700 p-2 rounded" placeholder="Shipper" value={shipper} onChange={(e) => setShipper(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Consignee" value={consignee} onChange={(e) => setConsignee(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Commodity" value={commodity} onChange={(e) => setCommodity(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Weight" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Quantity" value={quantity} onChange={(e) =>  setQuantity(e.target.value)} />
+                    <input className="bg-gray-700 p-2 rounded" placeholder="Weight" value={weight} onChange={(e) => {
+                        const val = validateNonNegativeTwoDecimals(e.target.value);
+                        if (val !== null) setWeight(val);
+                        }}
+                    />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Port of Loading" value={portLoading} onChange={(e) => setPortLoading(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Port of Discharge" value={portDischarge} onChange={(e) => setPortDischardge(e.target.value)} />
                 </div>
@@ -126,12 +131,48 @@ export default function JobForm() {
 
             {/* Section 2: Currency Rates */}
             <section className="mb-6">
-                <h3 className="text-xl font-semibold mb-4">Currency Rates</h3>
-                <div className="grid grid-cols-3 gap-4">
-                    <input className="bg-gray-700 p-2 rounded" placeholder="AED to USD" type="number" value={rateAEDUSD} onChange={(e) => setRateAEDUSD(parseFloat(e.target.value))} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="RUB to USD" type="number" value={rateRUBUSD} onChange={(e) => setRateRUBUSD(parseFloat(e.target.value))} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="AED to EUR" type="number" value={rateAEDEUR} onChange={(e) => setRateAEDEUR(parseFloat(e.target.value))} />
-                </div>
+                    <h3 className="text-xl font-semibold mb-4">Currency Rates</h3>
+                    <div className="rates-row">
+                        <label>
+                            AED to USD:
+                            <input
+                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4}}?$"
+                                placeholder="AED to USD"
+                                value={rateAEDUSD}
+                                onPaste={blockPaste}
+                                onKeyDown={onlyPositiveDecimal4}
+                                onBlur={decimal4Blur(setRateAEDUSD)}
+                                onChange={decimal4Change(setRateAEDUSD)}
+                            />
+                        </label>
+                        <label>
+                            RUB to USD:
+                            <input
+                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4}}?$"
+                                placeholder="RUB to USD"
+                                value={rateRUBUSD}
+                                onPaste={blockPaste}
+                                onKeyDown={onlyPositiveDecimal4}
+                                onBlur={decimal4Blur(setRateRUBUSD)}
+                                onChange={decimal4Change(setRateRUBUSD)}
+                            />
+                        </label>
+                        <label>
+                            AED to EUR:
+                            <input
+                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4}}?$"
+                                placeholder="AED to EUR"
+                                value={rateAEDEUR}
+                                onPaste={blockPaste}
+                                onKeyDown={onlyPositiveDecimal4}
+                                onBlur={decimal4Blur(setRateAEDEUR)}
+                                onChange={decimal4Change(setRateAEDEUR)}
+                            />
+                        </label>
+                    </div>
+
+
+
             </section>
 
             {/* Section 3: Payment */}
