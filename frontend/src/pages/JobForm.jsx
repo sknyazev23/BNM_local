@@ -286,7 +286,7 @@ export default function JobForm() {
                         <span className="ex-cell">{format4(amount)}</span>
                         <span className="ex-cell">{currency}</span>
                         <span className="ex-cell">{format4(amountAED)}</span>
-                        <span className="ex-cell">—</span>
+                        <span className="ex-cell"></span>
                         <span className="ex-cell">
                             {sale.worker ? (workerNameMap[sale.worker] ?? sale.worker) : "—"}
                         </span>
@@ -404,6 +404,11 @@ export default function JobForm() {
                 }}
                 workers={workers}
                 existingData={currentSale !== null ? sales[currentSale] : {}}
+                rates={{
+                    AED_to_USD: rateAEDUSD,
+                    RUB_to_USD: rateRUBUSD,
+                    AED_to_EUR: rateAEDEUR,
+                }}
             />
             
             )}

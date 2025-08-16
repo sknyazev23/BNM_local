@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import API from "../api";
 import { toAED } from "../utils/currency";
+import { format4 } from "../utils/numberFormat";
 import { onlyPositiveDecimal4, blockPaste, decimal4Change, decimal4Blur } from "../utils/numberValidation";
 import "../styles/modal.css";
 
@@ -17,15 +18,17 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
     return Number.isFinite(res) ? res : 0;
   }, [formData.qty, formData.unit_price]);
 
+  const isRequiredText = (v) => typeof v === "string" && v.trim().length > 0;
+
 
   // показываем числа ТОЛЬКО когда оба поля > 0
-  const bothField = formData.qty !== "" && formData.unit_price !== "";
-  const amountStr = bothField ? amount.toFixed(4) : "";
+  const showAmmounts = Number(formData.qty) > 0 && Number(formData.unit_price) > 0;
+  const amountStr = showAmmounts ? format4(amount) : "";
   const amountAED = useMemo(() => (
-    bothField ? toAED(amount, formData.currency || "USD", rates) : 0
-  ), [bothField, amount, formData.currency, rates]);
+    showAmmounts ? toAED(amount, formData.currency || "USD", rates) : 0
+  ), [showAmmounts, amount, formData.currency, rates]);
 
-  const amountAEDStr = bothField ? amountAED.toFixed(4) : "";
+  const amountAEDStr = showAmmounts ? format4(amountAED) : "";
 
 
   useEffect(() => {
@@ -51,20 +54,24 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
   // сохранение
   const handleSave = (e) => {
     e.preventDefault();
-    onSave({ ...formData, amount });
+    if (!isRequiredText(formData.description)) {
+      alert("Sale description is required!");
+      return;
+    }
+    const amount_aed = toAED(amount, formData.currency || "USD", rates);
+    onSave({ ...formData, amount, amountAED });
     setIsEdited(false);
   };
-
-    //вычисляем Amount in AED здесь же (точность финального сохранения не страдает)
-  const amount_aed = toAED(amount, formData.currency || "USD", rates);
-
-
 
   const handleClose = () => {
     if (isEdited) {
       if (confirm("Save changes before closing?")) {
+        if (!isRequiredText(formData.description)) {
+          alert("Sale description is required!");
+          return;
+        }
         const amount_aed = toAED(amount, formData.currency || "USD", rates);
-        onSave({ ...formData, amount });
+        onSave({ ...formData, amount, amountAED });
       }
     }
     onClose();
@@ -95,22 +102,46 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
 
             {/* Qty */}
             <input
-              placeholder="Qty"
+              placeholder="Quantity"
               type="number"
+              min="0"
+              step="1"
               value={formData.qty ?? ""}
-              onChange={(e) => handleChange("qty", parseFloat(e.target.value) || 0)}
+              onKeyDown={(e) => {
+                if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
+              }}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "") {
+                  handleChange("qty", "");
+                  return;
+                }
+                const n = parseInt(v, 10);
+                handleChange("qty", Number.isFinite(n) ? Math.max(0, n) : 0);
+              }}
+              onBlur={(e) => {
+                const n = parseInt(e.target.value, 10);
+                const cleaned = Number.isFinite(n) ? Math.max(0, n) : 0;
+                e.target.value = String(cleaned);     // выравниваем видимое значение
+                handleChange("qty", cleaned);
+              }}
+            
             />
 
             {/* Unit Price */}
             <input
               placeholder="Unit Price"
-              type="number"
+              type="text"
+              inputMode="decimal"
               value={formData.unit_price ?? ""}
-              onChange={(e) => handleChange("unit_price", parseFloat(e.target.value) || 0)}
+              onKeyDown={onlyPositiveDecimal4}
+              onPaste={blockPaste}
+              onChange={decimal4Change((v) => handleChange("unit_price", v))}
+              onBlur={decimal4Blur((v) => handleChange("unit_price", v))}
             />
 
             {/* Amount авто */}
-            <div>Amount: {amountStr || "-"}</div>
+            <div>Amount: {amountStr}</div>
 
             {/* Currency */}
             <select
@@ -123,7 +154,7 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
               <option value="EUR">EUR</option>
             </select>
 
-            <div>Amount in AED: {amountAEDStr || "-"}</div>
+            <div>Amount in AED: {amountAEDStr}</div>
 
             {/* Choose worker (один ответственный) */}
             <select

@@ -15,6 +15,9 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     return Number.isFinite(res) ? res : 0;
   }, [formData.quantity, formData.unit_cost]);
 
+  const isRequiredText = (v) => typeof v === "string" && v.trim().length > 0;
+
+
 
   useEffect(() => {
     if (isOpen) {
@@ -39,6 +42,10 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   // Сохранение
   const handleSave = (e) => {
     e.preventDefault();
+    if (!isRequiredText(formData.description)) {
+      alert("Cost description is required!");
+      return;
+    }
     onSave({ ...formData, amount });
     setIsEdited(false);
   };
@@ -47,6 +54,10 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   const handleClose = () => {
     if (isEdited) {
       if (confirm("Save changes before closing?")) {
+        if (!isRequiredText(formData.description)) {
+          alert("Cost description is required!");
+          return;
+        }
         onSave({ ...formData, amount });
       }
     }
@@ -64,7 +75,32 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
           <div className="modal-grid">
             <input placeholder="#" value={formData.no || ""} onChange={(e) => handleChange("no", e.target.value)} />
             <input placeholder="Cost description" value={formData.description || ""} onChange={(e) => handleChange("description", e.target.value)} />
-            <input placeholder="Quantity" type="number" value={formData.quantity || ""} onChange={(e) => handleChange("quantity", parseFloat(e.target.value) || 0)} />
+            <input
+              placeholder="Quantity"
+              type="number"
+              min="0"
+              step="1"
+              value={formData.quantity ?? ""}
+              onKeyDown={(e) => {
+                if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
+              }}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "") {
+                  handleChange("quantity", "");
+                  return;
+                }
+                const n = parseInt(v, 10);
+                handleChange("quantity", Number.isFinite(n) ? Math.max(0, n) : 0);
+              }}
+              onBlur={(e) => {
+                const n = parseInt(e.target.value, 10);
+                const cleaned = Number.isFinite(n) ? Math.max(0, n) : 0;
+                e.target.value = String(cleaned);
+                handleChange("quantity", cleaned);
+              }}
+            />
+
             <input placeholder="Cost per unit" type="number" value={formData.unit_cost || ""} onChange={(e) => handleChange("unit_cost", parseFloat(e.target.value) || 0)} />
             <input placeholder="Amount" type="text" value={amount.toFixed(4)} readOnly />
 
