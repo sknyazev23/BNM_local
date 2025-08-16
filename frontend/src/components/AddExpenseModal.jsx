@@ -62,7 +62,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
 
         <form onSubmit={handleSave}>
           <div className="modal-grid">
-            <input placeholder="№" value={formData.no || ""} onChange={(e) => handleChange("no", e.target.value)} />
+            <input placeholder="#" value={formData.no || ""} onChange={(e) => handleChange("no", e.target.value)} />
             <input placeholder="Cost description" value={formData.description || ""} onChange={(e) => handleChange("description", e.target.value)} />
             <input placeholder="Quantity" type="number" value={formData.quantity || ""} onChange={(e) => handleChange("quantity", parseFloat(e.target.value) || 0)} />
             <input placeholder="Cost per unit" type="number" value={formData.unit_cost || ""} onChange={(e) => handleChange("unit_cost", parseFloat(e.target.value) || 0)} />
@@ -84,6 +84,24 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
                 <option key={w.id || w._id} value={w.id || w._id}>{w.name}</option>
               ))}
             </select>
+
+            <input
+              type={formData.payment_date_to_seller ? "date" : "text"}
+              placeholder="Date of our payment to Seller"
+              value={formData.payment_date_to_seller || ""}
+              onFocus={(e) => (e.target.type = "date")}
+              onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+              onChange={(e) => handleChange("payment_date_to_seller", e.target.value)}
+            />
+
+            <textarea
+              placeholder="Payment note"
+              rows={2}
+              value={formData.payment_note || ""}
+              onChange={(e) => handleChange("payment_note", e.target.value)}
+            />
+
+
           </div>
 
           <div className="modal-footer">

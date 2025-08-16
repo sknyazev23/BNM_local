@@ -265,23 +265,58 @@ export default function JobForm() {
 
                 <TransactionHeader isExpense={false} />
 
-                {sales.map((sale, index) => (
-                    <SaleBlock
-                    key={index}
-                    sale={sale}
-                    index={index}
-                    onRemove={removeSale}
-                    onChange={handleSaleChange}
-                    workers={workers}
-                    onAddWorker={() => setShowWorkerModal(true)}
-                    />
-                ))}
+                <div className="expenses-cards">
+                    {sales.map((sale, i) => {
+                    const qty    = Number(sale.qty ?? 0);
+                    const unit   = Number(sale.unit_price ?? 0);
+                    const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
+                    const currency = sale.currency || "USD";
+                    const amountAED = toAED(amount, currency, {
+                        AED_to_USD: rateAEDUSD,
+                        RUB_to_USD: rateRUBUSD,
+                        AED_to_EUR: rateAEDEUR,
+                    });
 
-                <button type="button"
-                    onClick={() => {
-                    setCurrentSale(null);
-                    setShowSaleModal(true);
-                    }}
+                    return (
+                        <div className="expense-card-row" key={i}>
+                        <span className="ex-cell num">{i + 1}</span>
+                        <span className="ex-cell desc">{sale.description || "—"}</span>
+                        <span className="ex-cell">{qty}</span>
+                        <span className="ex-cell">{format4(unit)}</span>
+                        <span className="ex-cell">{format4(amount)}</span>
+                        <span className="ex-cell">{currency}</span>
+                        <span className="ex-cell">{format4(amountAED)}</span>
+                        <span className="ex-cell">—</span>
+                        <span className="ex-cell">
+                            {sale.worker ? (workerNameMap[sale.worker] ?? sale.worker) : "—"}
+                        </span>
+
+                        <div className="ex-actions-col">
+                            <button
+                            type="button"
+                            className="ex-action-btn"
+                            title="Edit"
+                            onClick={() => { setCurrentSale(i); setShowSaleModal(true); }}
+                            >
+                            <Edit2 size={16} />
+                            </button>
+                            <button
+                            type="button"
+                            className="ex-action-btn danger"
+                            title="Delete"
+                            onClick={() => removeSale(i)}
+                            >
+                            <Trash2 size={16} />
+                            </button>
+                        </div>
+                        </div>
+                    );
+                    })}
+                </div>
+
+                <button
+                    type="button"
+                    onClick={() => { setCurrentSale(null); setShowSaleModal(true); }}
                     className="bn-btn"
                 >
                     <Plus size={18} /> Add Sale
@@ -331,6 +366,8 @@ export default function JobForm() {
                 </button>
             </div>
             
+
+            {/* Рендер модалок */}
             {showExpenseModal && (
                 <AddExpenseModal
                     isOpen={true}
@@ -350,18 +387,26 @@ export default function JobForm() {
                 />
             )}
 
-
+            
             {showSaleModal && (
             <AddSaleModal
+                isOpen={true}
                 onClose={() => setShowSaleModal(false)}
                 onSave={(newSale) => {
-                    setSales([...sales, newSale]);
+                    if (currentSale !== null) {
+                        const updated = [...sales];
+                        updated[currentSale] = newSale;
+                        setSales(updated);
+                    } else {
+                        setSales([...sales, newSale]);
+                    }
                     setShowSaleModal(false);
                 }}
                 workers={workers}
-                existingSale={currentSale}
+                existingData={currentSale !== null ? sales[currentSale] : {}}
             />
-        )}
+            
+            )}
 
         </div>
     );
