@@ -4,7 +4,7 @@ import { toAED } from "../utils/currency";
 import API from "../api";
 import { format4 } from "../utils/numberFormat";
 import ClientSelect from "../components/ClientSelect";
-
+import { calcTotals } from "../utils/totalModals";
 
 import FileUpload from "../components/FileUpload";
 import AddExpenseModal from "../components/AddExpenseModal";
@@ -49,8 +49,13 @@ export default function JobForm() {
         return m;
     }, [workers]);
     const [showWorkerModal, setShowWorkerModal] = useState(false);
-    
 
+    const fxRates = useMemo(() => ({
+        AED_to_USD: rateAEDUSD,
+        RUB_to_USD: rateRUBUSD,
+        AED_to_EUR: rateAEDEUR,
+    }), [rateAEDUSD, rateRUBUSD, rateAEDEUR]);
+    
     useEffect(() => {
         API.get("/workers").then((res) => setWorkers(res.data));
     }, []);
@@ -109,6 +114,22 @@ export default function JobForm() {
         await API.post("/jobs", jobData);
         alert("Congrats! Job saved.");
     };
+
+    // итоги по модалкам
+    const expenseTotals = useMemo(
+        () => calcTotals(expenses, fxRates, { qtyKey: "quantity", unitKey: "unit_cost" }),
+        [expenses, fxRates]
+        );
+
+        const saleTotals = useMemo(
+        () => calcTotals(sales, fxRates, { qtyKey: "qty", unitKey: "unit_price" }),
+        [sales, fxRates]
+        );
+
+        // (опционально) профит
+        // const profitAED = saleTotals.sumAED - expenseTotals.sumAED;
+        // const profitUSD = Number(fxRates.AED_to_USD) ? profitAED / Number(fxRates.AED_to_USD) : 0;
+
 
     return (
         <div className="job-form-wrapper">
@@ -205,11 +226,7 @@ export default function JobForm() {
                     const unit = Number(expense.unit_cost ?? 0);
                     const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
                     const currency = expense.currency || "USD";
-                    const amountAED = toAED(amount, currency, {
-                        AED_to_USD: rateAEDUSD,
-                        RUB_to_USD: rateRUBUSD,
-                        AED_to_EUR: rateAEDEUR,
-                    });
+                    const amountAED = toAED(amount, currency, fxRates);
 
                     return (
                         <div className="expense-card-row" key={i}>
@@ -247,13 +264,22 @@ export default function JobForm() {
                     })}
                 </div>
 
-                <button
-                    type="button"
-                    onClick={() => { setCurrentExpense(null); setShowExpenseModal(true); }}
-                    className="bn-btn"
-                >
-                    <Plus size={18} /> Add Expense
-                </button>
+                <div className="exp-toolbar">
+                    {/* вывод Total */}
+                    <div className="totals">
+                        <span>Amount in AED: {format4(expenseTotals.sumAED)}</span>
+                        <span>Amount in USD: {format4(expenseTotals.sumUSD)}</span>
+                    </div>
+
+
+                    <button
+                        type="button"
+                        onClick={() => { setCurrentExpense(null); setShowExpenseModal(true); }}
+                        className="bn-btn"
+                    >
+                        <Plus size={18} /> Add Expense
+                    </button>
+                </div>
 
 
             </section>
@@ -314,13 +340,22 @@ export default function JobForm() {
                     })}
                 </div>
 
-                <button
-                    type="button"
-                    onClick={() => { setCurrentSale(null); setShowSaleModal(true); }}
-                    className="bn-btn"
-                >
-                    <Plus size={18} /> Add Sale
-                </button>
+                <div className="exp-toolbar">
+                    {/* вывод Total */}
+                    <div className="totals">
+                        <span>Amount in AED: {format4(saleTotals.sumAED)}</span>
+                        <span>Amount in USD: {format4(saleTotals.sumUSD)}</span>
+                    </div>
+
+
+                    <button
+                        type="button"
+                        onClick={() => { setCurrentSale(null); setShowSaleModal(true); }}
+                        className="bn-btn"
+                    >
+                        <Plus size={18} /> Add Sale
+                    </button>
+                </div>
             </section>
 
 
@@ -384,6 +419,9 @@ export default function JobForm() {
                     }}
                     workers={workers}
                     existingData={currentExpense !== null ? expenses[currentExpense] : {}}
+                    displayNo={currentExpense !== null ? currentExpense +1 :expenses.length + 1}
+                    sales = {sales}
+                    rates={fxRates}
                 />
             )}
 
@@ -404,11 +442,8 @@ export default function JobForm() {
                 }}
                 workers={workers}
                 existingData={currentSale !== null ? sales[currentSale] : {}}
-                rates={{
-                    AED_to_USD: rateAEDUSD,
-                    RUB_to_USD: rateRUBUSD,
-                    AED_to_EUR: rateAEDEUR,
-                }}
+                displayNo={currentExpense !== null ? currentExpense +1 :expenses.length + 1}
+                rates={fxRates}
             />
             
             )}

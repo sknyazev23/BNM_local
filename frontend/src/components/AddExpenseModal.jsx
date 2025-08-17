@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import API from "../api";
 import "../styles/modal.css";
+import { format4 } from "../utils/numberFormat";
+import { toAED } from "../utils/currency";
 
-export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, workers }) {
+export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, sales = [] }) {
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
@@ -15,9 +17,18 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     return Number.isFinite(res) ? res : 0;
   }, [formData.quantity, formData.unit_cost]);
 
+  // amount in AED
+  const showAmmounts = Number(formData.quantity) > 0 && Number(formData.unit_cost) > 0;
+  const amountAED = useMemo(() => (
+    showAmmounts ? toAED(amount, formData.currency || "USD", rates) : 0
+  ), [showAmmounts, amount, formData.currency, rates]);
+
+
+  const showAmount =
+    Number(formData.quantity) > 0 && Number(formData.unit_cost) > 0; 
+
   const isRequiredText = (v) => typeof v === "string" && v.trim().length > 0;
-
-
+  
 
   useEffect(() => {
     if (isOpen) {
@@ -29,7 +40,8 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
 
   // Загружаем данные при открытии
   useEffect(() => {
-    setFormData(existingData || {});
+    const ed = existingData || {};
+    setFormData({ ...ed, binded_sale: ed.binded_sale ?? ""});
     setIsEdited(false);
   }, [existingData, isOpen]);
 
@@ -69,11 +81,12 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <div className="modal-no"># {displayNo}</div>
         <h3 className="modal-title">Add Expense</h3>
 
         <form onSubmit={handleSave}>
           <div className="modal-grid">
-            <input placeholder="#" value={formData.no || ""} onChange={(e) => handleChange("no", e.target.value)} />
+            
             <input placeholder="Cost description" value={formData.description || ""} onChange={(e) => handleChange("description", e.target.value)} />
             <input
               placeholder="Quantity"
@@ -95,14 +108,20 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
               }}
               onBlur={(e) => {
                 const n = parseInt(e.target.value, 10);
-                const cleaned = Number.isFinite(n) ? Math.max(0, n) : 0;
+                const cleaned = Number.isFinite(n) ? Math.max(0, n) : "";
                 e.target.value = String(cleaned);
                 handleChange("quantity", cleaned);
               }}
             />
 
-            <input placeholder="Cost per unit" type="number" value={formData.unit_cost || ""} onChange={(e) => handleChange("unit_cost", parseFloat(e.target.value) || 0)} />
-            <input placeholder="Amount" type="text" value={amount.toFixed(4)} readOnly />
+            <input placeholder="Cost per unit" type="number" value={formData.unit_cost || ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "") return handleChange("unit_cost", "");
+              const n = parseFloat(v);
+              handleChange("unit_cost", Number.isFinite(n) ? n : "");
+            }} />
+            <div>Amount: {showAmount ? format4(amount) : ""}</div>
 
             <select value={formData.currency || ""} onChange={(e) => handleChange("currency", e.target.value)}>
               <option value="">Currency</option>
@@ -112,12 +131,31 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
               <option value="EUR">EUR</option>
             </select>
 
+            <div>Cost amount in AED: {showAmount ? format4(amountAED) : ""}</div>
+
+
             <input placeholder="Seller" value={formData.seller || ""} onChange={(e) => handleChange("seller", e.target.value)} />
 
             <select value={formData.worker || ""} onChange={(e) => handleChange("worker", e.target.value)}>
               <option value="">Choose worker</option>
               {workersList.map(w => (
                 <option key={w.id || w._id} value={w.id || w._id}>{w.name}</option>
+              ))}
+            </select>
+
+            {/* Binded Sale */}
+            <select
+              value={formData.binded_sale ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                handleChange("binded_sale", v === "" ? "" : Number(v));
+              }}
+            >
+              <option value="">Binded Sale</option>
+              {sales.map((s, idx) => (
+                <option key={s.id || s._id || idx} value={idx}>
+                  {(s.description && s.description.trim()) ? s.description : `Sale #${idx + 1}`}
+                </option>
               ))}
             </select>
 

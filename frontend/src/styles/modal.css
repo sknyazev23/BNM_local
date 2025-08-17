@@ -34,6 +34,16 @@
   color: white;
 }
 
+.modal-no{
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  font-weight: 700;
+  color: #94e6f1;
+  opacity: .9;
+  pointer-events: none;
+  z-index: 1;
+}
 
 /* Сетка полей */
 .modal-grid {

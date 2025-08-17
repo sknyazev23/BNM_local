@@ -5,7 +5,7 @@ import { format4 } from "../utils/numberFormat";
 import { onlyPositiveDecimal4, blockPaste, decimal4Change, decimal4Blur } from "../utils/numberValidation";
 import "../styles/modal.css";
 
-export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {}, workers, rates }) {
+export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates }) {
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
@@ -82,18 +82,12 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        <div className="modal-no"># {displayNo}</div>
         <h3 className="modal-title">Add Sale</h3>
 
         <form onSubmit={handleSave}>
           <div className="modal-grid">
-            {/* # */}
-            <input
-              placeholder="#"
-              value={formData.no || ""}
-              onChange={(e) => handleChange("no", e.target.value)}
-            />
 
-            {/* Description (обязательна по ТЗ, как в AddExpenseModal — без html required) */}
             <input
               placeholder="Sale description"
               value={formData.description || ""}
@@ -121,7 +115,7 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
               }}
               onBlur={(e) => {
                 const n = parseInt(e.target.value, 10);
-                const cleaned = Number.isFinite(n) ? Math.max(0, n) : 0;
+                const cleaned = Number.isFinite(n) ? Math.max(0, n) : "";
                 e.target.value = String(cleaned);     // выравниваем видимое значение
                 handleChange("qty", cleaned);
               }}
