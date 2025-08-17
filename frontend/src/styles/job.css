@@ -194,16 +194,32 @@ textarea {
   display:flex;
   align-items:center;
   gap:16px;
-  margin:8px 0 12px;
+  margin:8px 10px 22px;
   flex-wrap:wrap;                 /* перенос на узких экранах */
 }
 
 .exp-toolbar .totals{
   display:flex;
   align-items:center;
-  gap:20px;
+  gap:34px;
   color:#d2f3f1;
   font-size:14px;
+}
+
+.totals > span + span {
+  position: relative;
+  padding-left: 38px;       /* отступ после палки */
+}
+
+.exp-toolbar .totals > span + span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 1.1em;            /* высота палки */
+  background: rgba(255,255,255,.35);
 }
 
 /* уводим кнопку вправо, не ломая общую .bn-btn */

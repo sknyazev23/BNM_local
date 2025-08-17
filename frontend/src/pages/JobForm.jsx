@@ -119,12 +119,22 @@ export default function JobForm() {
     const expenseTotals = useMemo(
         () => calcTotals(expenses, fxRates, { qtyKey: "quantity", unitKey: "unit_cost" }),
         [expenses, fxRates]
-        );
+    );
 
-        const saleTotals = useMemo(
+    const saleTotals = useMemo(
         () => calcTotals(sales, fxRates, { qtyKey: "qty", unitKey: "unit_price" }),
         [sales, fxRates]
-        );
+    );
+
+    // вывод модалок: «ненулевое/непустое число»
+    const isNonZero = (v) => v != null && Number.isFinite(+v) && Math.abs(+v) > 1e-9;
+
+    // показывать ли блок итогов
+    const showExpenseTotals = isNonZero(expenseTotals.sumAED) || isNonZero(expenseTotals.sumUSD);
+    const showSaleTotals    = isNonZero(saleTotals.sumAED)    || isNonZero(saleTotals.sumUSD);
+
+
+
 
         // (опционально) профит
         // const profitAED = saleTotals.sumAED - expenseTotals.sumAED;
@@ -265,12 +275,18 @@ export default function JobForm() {
                 </div>
 
                 <div className="exp-toolbar">
+                    
                     {/* вывод Total */}
-                    <div className="totals">
-                        <span>Amount in AED: {format4(expenseTotals.sumAED)}</span>
-                        <span>Amount in USD: {format4(expenseTotals.sumUSD)}</span>
-                    </div>
-
+                    {showExpenseTotals && (
+                        <div className="totals">
+                            {isNonZero(expenseTotals.sumAED) && (
+                            <span>Amount in AED: {format4(expenseTotals.sumAED)}</span>
+                            )}
+                            {isNonZero(expenseTotals.sumUSD) && (
+                            <span>Amount in USD: {format4(expenseTotals.sumUSD)}</span>
+                            )}
+                        </div>
+                        )}
 
                     <button
                         type="button"
@@ -341,12 +357,18 @@ export default function JobForm() {
                 </div>
 
                 <div className="exp-toolbar">
+                    
                     {/* вывод Total */}
+                    {showSaleTotals && (
                     <div className="totals">
+                        {isNonZero(saleTotals.sumAED) && (
                         <span>Amount in AED: {format4(saleTotals.sumAED)}</span>
+                        )}
+                        {isNonZero(saleTotals.sumUSD) && (
                         <span>Amount in USD: {format4(saleTotals.sumUSD)}</span>
+                        )}
                     </div>
-
+                    )}
 
                     <button
                         type="button"
