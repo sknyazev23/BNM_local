@@ -1,0 +1,75 @@
+/* выводы */
+.end-summary{
+  margin-top:14px;
+  margin-bottom:16px;            /* отступ над кнопками */
+  padding:16px 20px;
+  
+  position: relative;            /* нужно для псевдо-элемента */
+  border-radius:12px;
+
+  /* вместо сплошного фона — лёгкий градиент */
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.14));
+  border:1px solid rgba(255,255,255,.12);
+
+  /* объём: внешние тени + внутренние блики/края */
+  box-shadow:
+    0 12px 24px rgba(0,0,0,.35),     /* глубокая внешняя тень */
+    0 2px 6px rgba(0,0,0,.25),       /* дополнительная глубина */
+    inset 0 1px 0 rgba(255,255,255,.12), /* верхний внутренний блик */
+    inset 0 -1px 0 rgba(0,0,0,.35);  /* нижний внутренний край */
+
+  font-size:18px;
+}
+.end-summary .sum-row{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin:8px 0;
+}
+.end-summary .sum-label{
+  width:210px;
+  color:#092c2a;
+  font-weight:600;
+  font-size: 15px;
+}
+.end-summary .sum-value{
+  flex:1;
+  color:#fff;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  gap: 14px; /* базовый промежуток между значениями */
+}
+
+.end-summary .sum-value > span + span::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 1.1em;
+  background: rgba(255,255,255,.35);
+}
+
+.end-summary::after{
+  content:"";
+  position:absolute;
+  inset:1px;                       /* тонкая «внутренняя плёнка» по краю */
+  border-radius:10px;
+  pointer-events:none;
+  background: radial-gradient(120% 60% at 50% 0%, rgba(255,255,255,.06), transparent 70%);
+}
+
+/* базовый стиль контейнера со значением в первой строке */
+.end-summary .sum-values{
+  display: flex;
+  align-items: center;
+  color: #fff;
+  font-size: 17px;
+}
+
+/* увеличить зазор между "AED" и "USD" */
+.end-summary .sum-row .sum-label:nth-of-type(2){
+  margin-left: 94px;
+}

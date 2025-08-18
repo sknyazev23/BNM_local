@@ -5,13 +5,14 @@ import API from "../api";
 import { format4 } from "../utils/numberFormat";
 import ClientSelect from "../components/ClientSelect";
 import { calcTotals } from "../utils/totalModals";
-
+import EndSummary from "../components/EndSummary";
 import FileUpload from "../components/FileUpload";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
 import TransactionHeader from "../components/TransactionHeader";
 import { validateNonNegativeTwoDecimals, onlyPositiveDecimal4, blockPaste, decimal4Blur, decimal4Change } from "../utils/numberValidation";
 import "../styles/job.css";
+import "../styles/endSummary.css";
 
 
 export default function JobForm() {
@@ -358,7 +359,7 @@ export default function JobForm() {
 
                 <div className="exp-toolbar">
                     
-                    {/* вывод Total */}
+                    {/* вывод Total Sale */}
                     {showSaleTotals && (
                     <div className="totals">
                         {isNonZero(saleTotals.sumAED) && (
@@ -379,6 +380,14 @@ export default function JobForm() {
                     </button>
                 </div>
             </section>
+
+            {/* выводы */}
+            <EndSummary
+                expenses={expenses}
+                sales={sales}
+                fxRates={{ AED_to_USD: rateAEDUSD, RUB_to_USD: rateRUBUSD, AED_to_EUR: rateAEDEUR }}
+                workerNameMap={workerNameMap}
+                />
 
 
             {/* File Upload */}
