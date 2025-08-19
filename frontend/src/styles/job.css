@@ -7,10 +7,24 @@ body {
 
 .job-form-wrapper {
   max-width: 1400px;
+  min-width: 500px;
   margin: 0 auto;
   padding: 24px;
   background-color: #0c767b;
   border-radius: 8px;
+
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+@media (max-width: 1325px) {
+  body {
+    overflow-x: auto;
+  }
+}
+
+.job-form-wrapper > * {
+  min-width: max(1325px, 100%);
 }
 
 
@@ -98,13 +112,6 @@ textarea {
 .job-title {
   text-align: right;
 }
-
-
-/* Чтобы всё, что внутри формы, не могло «вылезти» */
-.job-form-wrapper {
-  overflow-x: hidden;
-}
-
 
 /* Rates block */
 .rates-row {

@@ -144,7 +144,9 @@ export default function JobForm() {
 
     return (
         <div className="job-form-wrapper">
-            <h2 className="job-title text-3xl font-bold mb-6">Create NEW Job</h2>
+            <h2 className="end-summary">
+                <span className="title">Create NEW Job</span>
+            </h2>
 
             {/* Секция 1: Main Part */}
             <section className="mb-6">

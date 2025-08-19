@@ -3,7 +3,6 @@
   margin-top:14px;
   margin-bottom:16px;            /* отступ над кнопками */
   padding:16px 20px;
-  
   position: relative;            /* нужно для псевдо-элемента */
   border-radius:12px;
 
@@ -20,10 +19,22 @@
 
   font-size:18px;
 }
+
+.end-summary .title{
+  color:#092c2a;
+  font-weight:600;
+  font-size: 25px;
+  margin-left:auto;
+  text-align: right;
+  display:block;
+  width:max-content;
+}
+
 .end-summary .sum-row{
   display:flex;
+  justify-content: space-between;
   gap:12px;
-  align-items:center;
+  align-items:flex-start;
   margin:8px 0;
 }
 .end-summary .sum-label{
@@ -32,14 +43,16 @@
   font-weight:600;
   font-size: 15px;
 }
-.end-summary .sum-value{
+.end-summary .sum-value,
+.end-summary .sum-values{
   flex:1;
   color:#fff;
   display: flex;
   align-items: center;
-  font-size: 15px;
-  gap: 14px; /* базовый промежуток между значениями */
 }
+
+.end-summary .sum-value  { font-size: 15px; }
+.end-summary .sum-values { font-size: 17px; }
 
 .end-summary .sum-value > span + span::before{
   content: "";
@@ -61,15 +74,23 @@
   background: radial-gradient(120% 60% at 50% 0%, rgba(255,255,255,.06), transparent 70%);
 }
 
-/* базовый стиль контейнера со значением в первой строке */
-.end-summary .sum-values{
-  display: flex;
-  align-items: center;
-  color: #fff;
-  font-size: 17px;
+/* правая колонка с лейблами один под другим */
+.end-summary .sum-right{
+  display:flex;
+  flex-direction:column;
+  gap:10px;              /* расстояние между двумя правыми строками */
+  min-width:320px;       /* чтобы числа справа не ломали layout */
 }
 
-/* увеличить зазор между "AED" и "USD" */
-.end-summary .sum-row .sum-label:nth-of-type(2){
-  margin-left: 94px;
+/* каждая строка справа: лейбл + значение в ряд */
+.end-summary .sum-right-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* правым лейблам ширину не фиксируем жёстко */
+.end-summary .sum-right .sum-label{
+  width:auto;
+  min-width:180px;
 }

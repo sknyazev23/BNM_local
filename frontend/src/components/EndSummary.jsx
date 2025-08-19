@@ -93,25 +93,18 @@ export default function EndSummary({
       <div className="sum-row">
         <span className="sum-label">Total profit in AED:</span>
         <div className="sum-values">
-            {hasTotals && (
-            <>
-                <span>{format4(profitAED)} AED</span>
-            </>
-            )}
+            {hasTotals && <span>{format4(profitAED)} AED</span>}
         </div>
 
-        <span className="sum-label">Total profit in USD:</span>
-        <div className="sum-values">
-            {hasTotals && (
-            <>
-                {Number(fxRates?.AED_to_USD) ? (
-                <span>{format4(profitUSD)} $</span>
-                ) : null}
-            </>
-            )}
+        <div className="sum-right">
+            <div className="sum-right-item">
+                <span className="sum-label">Total profit in USD:</span>
+                <div className="sum-values">
+                    {hasTotals && Number(fxRates?.AED_to_USD) ? <span>{format4(profitUSD)} $</span> : null}
+                </div>
+            </div>
         </div>
-
-        </div>
+      </div>
 
 
       <div className="sum-row">
@@ -121,11 +114,16 @@ export default function EndSummary({
         <span className="sum-value">
           {workerProfitBase != null ? `${format4(workerProfitBase)} AED` : ""}
         </span>
-         <span className="sum-label">In USD: </span>
-        <span className="sum-value">
-          {workerProfitBase != null && Number(fxRates?.AED_to_USD)
-          ? `${format4(workerProfitBase / Number(fxRates.AED_to_USD))}$` : ""}
-        </span>
+
+        <div className="sum-right">
+            <div className="sum-right-item">
+                <span className="sum-label">Worker's profit base in USD: </span>
+                <span className="sum-value">
+                {workerProfitBase != null && Number(fxRates?.AED_to_USD)
+                ? `${format4(workerProfitBase / Number(fxRates.AED_to_USD))}$` : ""}
+                </span>
+            </div>
+        </div>
       </div>
 
 
