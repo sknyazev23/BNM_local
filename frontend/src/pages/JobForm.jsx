@@ -6,13 +6,14 @@ import { format4 } from "../utils/numberFormat";
 import ClientSelect from "../components/ClientSelect";
 import { calcTotals } from "../utils/totalModals";
 import EndSummary from "../components/EndSummary";
-import FileUpload from "../components/FileUpload";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
 import TransactionHeader from "../components/TransactionHeader";
+import DocSection from "../components/DocSection";
 import { validateNonNegativeTwoDecimals, onlyPositiveDecimal4, blockPaste, decimal4Blur, decimal4Change } from "../utils/numberValidation";
 import "../styles/job.css";
 import "../styles/endSummary.css";
+import "../styles/docsUploadSection.css"
 
 
 export default function JobForm() {
@@ -135,13 +136,7 @@ export default function JobForm() {
     const showSaleTotals    = isNonZero(saleTotals.sumAED)    || isNonZero(saleTotals.sumUSD);
 
 
-
-
-        // (опционально) профит
-        // const profitAED = saleTotals.sumAED - expenseTotals.sumAED;
-        // const profitUSD = Number(fxRates.AED_to_USD) ? profitAED / Number(fxRates.AED_to_USD) : 0;
-
-
+    
     return (
         <div className="job-form-wrapper">
             <h2 className="end-summary">
@@ -185,7 +180,7 @@ export default function JobForm() {
                         <label>
                             AED to USD:
                             <input
-                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4}}?$"
+                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4})?$"
                                 placeholder="AED to USD"
                                 value={rateAEDUSD}
                                 onPaste={blockPaste}
@@ -197,7 +192,7 @@ export default function JobForm() {
                         <label>
                             RUB to USD:
                             <input
-                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4}}?$"
+                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4})?$"
                                 placeholder="RUB to USD"
                                 value={rateRUBUSD}
                                 onPaste={blockPaste}
@@ -209,7 +204,7 @@ export default function JobForm() {
                         <label>
                             AED to EUR:
                             <input
-                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4}}?$"
+                                type="text" inputMode="decimal" pattern="^\\d+(\\.\\d{0,4})?$"
                                 placeholder="AED to EUR"
                                 value={rateAEDEUR}
                                 onPaste={blockPaste}
@@ -398,14 +393,8 @@ export default function JobForm() {
                 />
 
 
-            {/* File Upload */}
-            {jobId && (
-                <section className="mb-6">
-                    <h3 className="text-xl font-semibold mb-2">Documents</h3>
-                    <FileUpload jobId={jobId} />
-                </section>
-            )}
-
+            {/* Docs */}
+            <DocSection jobId={jobId} />
 
 
             {/* Buttons */}
@@ -481,7 +470,7 @@ export default function JobForm() {
                 }}
                 workers={workers}
                 existingData={currentSale !== null ? sales[currentSale] : {}}
-                displayNo={currentExpense !== null ? currentExpense +1 :expenses.length + 1}
+                displayNo={currentSale !== null ? currentSale +1 : sales.length + 1}
                 rates={fxRates}
             />
             
