@@ -6,10 +6,9 @@ body {
 }
 
 :root{
-/* регулируй ширину бланка одной строкой */
-  --jobform-width: 1200px;  /* например: 960px, 1000px, 1200px */
+/* ширина бланка */
+  --jobform-width: 1150px; 
 }
-
 
 .job-form-wrapper {
   width: var(--jobform-width);
@@ -95,7 +94,7 @@ button svg {
 .grid-2-1-1{
   display: grid;
   gap: 12px;
-  grid-template-columns: 2fr 1fr 1fr; /* 50% / 25% / 25% */
+  grid-template-columns: 2.03fr 1fr 1fr; /* 50% / 25% / 25% */
 }
 
 
@@ -144,7 +143,6 @@ textarea {
   box-sizing: border-box;
 }
 
-/* ===== Expenses as Cards (aligned with header) ===== */
 .expenses-cards { display:block; margin-top:8px; }
 
 .expense-card-row{

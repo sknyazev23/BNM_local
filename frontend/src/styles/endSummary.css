@@ -52,7 +52,10 @@
   align-items: center;
 }
 
-.end-summary .sum-value  { font-size: 15px; }
+.end-summary .sum-value  {
+  font-size: 15px;
+  white-space: pre-line; 
+}
 .end-summary .sum-values { font-size: 17px; }
 
 .end-summary .sum-value > span + span::before{

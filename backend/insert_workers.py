@@ -27,6 +27,14 @@ workers_data = [
         "role": "Director",
         "mail": "serdar@primeshipping.com",
         "percent_rate": 0
+    },
+     {
+        "id": "W004",
+        "name": "Dovran",
+        "status": "Rus logistisc",
+        "role": "Novo Sales manager",
+        "mail": "sales5.novo@primeshipping.com",
+        "percent_rate": 10
     }
 ]
 

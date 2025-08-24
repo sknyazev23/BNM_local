@@ -82,10 +82,13 @@ export default function EndSummary({
     : null;
 
 
-  const coworkerLine =
-    Array.from(coworkerMap.entries())
-      .map(([id, val]) => `${(workerNameMap[id] ?? id)} ${format4(val)} AED`)
-      .join("; ");
+  const AEDtoUSD = Number(fxRates?.AED_to_USD) || null;
+  const coworkerLine = Array.from(coworkerMap.entries())
+    .map(([id, val]) => {
+      const usd = AEDtoUSD ? val / AEDtoUSD : null;
+      const usdPart = usd != null ? ` == ${format4(usd)} $` : "";
+      return `${(workerNameMap[id] ?? id)} ${format4(val)} AED${usdPart}`;
+    }).join("; ");
 
   return (
     <div className="end-summary">
@@ -129,7 +132,7 @@ export default function EndSummary({
 
       <div className="sum-row">
         <span className="sum-label">Coworker profit base:</span>
-        <span className="sum-value">{coworkerLine}</span>
+        <span className="sum-value">{coworkerLine.replace(/;\s*/g, ';\n')}</span>
       </div>
     </div>
   );
