@@ -108,6 +108,16 @@
   bottom: 20px;
   font-size: 9px;
   color: #aaa;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.modal-date .date-text{
+  font-size: 12px;
+  color: #777;
+  text-align: right;        /* страховка */
 }
 
 /* Анимация появления */

@@ -1,0 +1,21 @@
+.pf-toggle{
+  display:inline-flex;
+  background:#1f1f1f;
+  border:1px solid #3a3a3a;
+  border-radius:10px;
+  overflow:hidden;
+}
+.pf-btn{
+  padding:6px 14px;
+  background:transparent;
+  color:#cfd8d7;
+  border:none;
+  cursor:pointer;
+  font-weight:400;
+}
+.pf-btn:hover{ background:#2a2a2a; }
+.pf-btn.active{
+  background:#2dd4bf22;
+  color:#2dd4bf;
+}
+.pf-btn:disabled{ opacity:.55; cursor:not-allowed; }

@@ -152,23 +152,29 @@ export default function JobForm() {
             <section className="mb-6">
                 <h3 className="text-xl font-semibold mb-4">Main Part</h3>
                 <div className="grid grid-cols-2 gap-4">
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Job ID" value={jobId} onChange={(e) => setJobId(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="BN Number" value={bnNumber} onChange={(e) => setBnNumber(e.target.value)} />
+                    <div className="row">
+                        <input className="bg-gray-700 p-2 rounded" placeholder="Job ID" value={jobId} onChange={(e) => setJobId(e.target.value)} />
+                        <input className="bg-gray-700 p-2 rounded" placeholder="BN Number" value={bnNumber} onChange={(e) => setBnNumber(e.target.value)} />
+                    </div>
                     <input className="bg-gray-700 p-2 rounded" placeholder="Refer BN" value={referBN} onChange={(e) => setReferBN(e.target.value)} />
                     
                     <ClientSelect value={client} onChange={setClient} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Carrier" value={carrier} onChange={(e) => setCarrier(e.target.value)} />
                     <input className="bg-gray-700 p-2 rounded" placeholder="Shipper" value={shipper} onChange={(e) => setShipper(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Consignee" value={consignee} onChange={(e) => setConsignee(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Commodity" value={commodity} onChange={(e) => setCommodity(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Quantity" value={quantity} onChange={(e) =>  setQuantity(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Weight" value={weight} onChange={(e) => {
-                        const val = validateNonNegativeTwoDecimals(e.target.value);
-                        if (val !== null) setWeight(val);
-                        }}
-                    />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Loading" value={portLoading} onChange={(e) => setPortLoading(e.target.value)} />
-                    <input className="bg-gray-700 p-2 rounded" placeholder="Port of Discharge" value={portDischarge} onChange={(e) => setPortDischardge(e.target.value)} />
+                    <ClientSelect value={consignee} onChange={setConsignee} placeholder="Consignee" />
+                    <div className="grid-2-1-1">
+                        <input className="bg-gray-700 p-2 rounded" placeholder="Commodity" value={commodity} onChange={(e) => setCommodity(e.target.value)} />
+                        <input className="bg-gray-700 p-2 rounded" placeholder="Quantity" value={quantity} onChange={(e) =>  setQuantity(e.target.value)} />
+                        <input className="bg-gray-700 p-2 rounded" placeholder="Weight" value={weight} onChange={(e) => {
+                            const val = validateNonNegativeTwoDecimals(e.target.value);
+                            if (val !== null) setWeight(val);
+                            }}
+                        />
+                    </div>
+                    <div className="row">
+                        <input className="bg-gray-700 p-2 rounded" placeholder="Port of Loading" value={portLoading} onChange={(e) => setPortLoading(e.target.value)} />
+                        <input className="bg-gray-700 p-2 rounded" placeholder="Port of Discharge" value={portDischarge} onChange={(e) => setPortDischardge(e.target.value)} />
+                    </div>
                 </div>
             </section>
 

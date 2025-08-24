@@ -1,13 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import API from "../api";
 import "../styles/modal.css";
+import "../styles/planFact.css";
 import { format4 } from "../utils/numberFormat";
 import { toAED } from "../utils/currency";
+import PlanFactToggle from "./PlanFactToggle";
 
 export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, sales = [] }) {
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
+  const [isPlan, setIsPlan] = useState(true);
 
   // пересчет для Amount
   const amount = useMemo(() => {
@@ -28,6 +31,9 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     Number(formData.quantity) > 0 && Number(formData.unit_cost) > 0; 
 
   const isRequiredText = (v) => typeof v === "string" && v.trim().length > 0;
+
+  const getIsPlan = (ed = {}) => typeof ed.is_plan === "boolean" ? ed.is_plan
+    : typeof ed.status === "string" ? ed.status.toLwerCase() === "plan" : true;
   
 
   useEffect(() => {
@@ -43,6 +49,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     const ed = existingData || {};
     setFormData({ ...ed, binded_sale: ed.binded_sale ?? ""});
     setIsEdited(false);
+    setIsPlan(getIsPlan(ed));
   }, [existingData, isOpen]);
 
   // Отслеживание изменений
@@ -58,7 +65,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
       alert("Cost description is required!");
       return;
     }
-    onSave({ ...formData, amount });
+    onSave({...formData, amount, is_plan: isPlan});
     setIsEdited(false);
   };
 
@@ -185,11 +192,14 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
         </form>
 
         <div className="modal-date">
+          <PlanFactToggle value={isPlan} onChange={setIsPlan} />
+          <time className="date-text">
           {new Date().toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "long",
             year: "numeric"
           })}
+          </time>
         </div>
       </div>
     </div>

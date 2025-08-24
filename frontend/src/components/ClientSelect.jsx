@@ -111,7 +111,7 @@ export default function ClientSelect({
             right: 0,
             marginTop: 6,
             background: "#2d2d2d",
-            border: "1px solid #444",
+            border: "1px solid #4e6b6aff",
             borderRadius: 8,
             zIndex: 9999,
             maxHeight: 260,
@@ -132,7 +132,7 @@ export default function ClientSelect({
                   padding: "10px 12px",
                   cursor: "pointer",
                   background: isActive ? "#3b3b3b" : "transparent",
-                  color: "#fff"
+                  color: "#a5f7ecff"
                 }}
               >
                 {c.name}
