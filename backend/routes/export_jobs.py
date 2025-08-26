@@ -9,7 +9,7 @@ from openpyxl.styles import Font, Alignment
 
 router = APIRouter()
 
-EXPORT_PATH = Path.home() /"Documents" / "BN" / "Exports"
+EXPORT_PATH = Path.home() / "Documents" / "BN" / "Exports"
 EXPORT_PATH.mkdir(parents=True, exist_ok=True)
 
 @router.get("/jobs/export")
@@ -23,11 +23,11 @@ def export_jobs(
 ):
     query = {}
     if client:
-        query["main_part.client"] = {"$regex": client, "$options": "i"}
+        query["main_part.client_name"] = {"$regex": client, "$options": "i"}
     if worker:
         query["$or"] = [
-            {"expenses_part.worker": worker},
-            {"sale_part.worker": worker}
+            {"expenses_part.workers": worker},
+            {"sale_part.workers": worker}
         ]
     if status == "open":
         query["status"] = "open"
@@ -41,7 +41,7 @@ def export_jobs(
             date_query["$gte"] = datetime.fromisoformat(date_from)
         if date_to:
             date_query["$lte"] = datetime.fromisoformat(date_to)
-        query["created_at"] = date_query
+        query["main_part.created_at"] = date_query
 
     jobs = list(jobs_collection.find(query))
 
@@ -59,43 +59,40 @@ def export_jobs(
 
     ws.append(headers)
 
-    for col in ws.iter_cols(min_row=1, max_row=1):
-        for cell in col:
-            cell.font = Font(bold=True)
-            cell.alignment = Aligement(horizontal="center")
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="center")
 
     for idx, job in enumerate(jobs, 1):
         worker_names = set()
+        for part in (job.get("expenses_part", []) + job.get("sale_part", [])):
+            for wid in part.get("workers", []):
+                wdoc = workers_collection.find_one({"worker_id": wid})
+                worker_names.add(wdoc.get("name", wid) if wdoc else wid)
 
-        for part in job.get("expenses_part", []) + job.get("sale_part", []):
-            if part.get("worker"):
-                worker_doc = workers_collection.find_one({"worker_id": part["worker"]})
-                if worker_doc:
-                    worker_names.add(worker_doc.get("name", part["worker"]))
-                else:
-                    worker_names.add(part["worker"])
+        created = job.get("main_part", {}).get("created_at")
+        closed  = job.get("main_part", {}).get("closed_at")
+        delivery = job.get("delivery_to_client_date")
 
         profit_usd = calculate_profit(job)
+
         row = [
             idx,
             job.get("job_id", ""),
-            job.get("main_part", {}).get("client", ""),
+            created[:10] if isinstance(created, str) else (created.strftime("%Y-%m-%d") if created else ""),
+            job.get("main_part", {}).get("client_name", ""),
             job.get("status", ""),
-            job.get("created_at", "").strftime("%Y-%m-%d") if job.get("created_at") else "",
-            job.get("closed_at", "").strftime("%Y-%m-%d") if job.get("closed_at") else "",
-            job.get("delivery_to_client_date", "").strftime("%Y-%m-%d") if job.get("delivery_to_client_date") else "",
-            ", ".join(worker_names),
-            round(profit_usd, 2)
+            round(profit_usd, 2),
+            delivery[:10] if isinstance(delivery, str) else (delivery.strftime("%Y-%m-%d") if delivery else ""),
+            ", ".join(sorted(worker_names)),
+            closed[:10] if isinstance(closed, str) else (closed.strftime("%Y-%m-%d") if closed else ""),
         ]
         ws.append(row)
+
     wb.save(file_path)
     return FileResponse(file_path, filename=file_path.name)
 
 def calculate_profit(job):
-    usd_expenses = sum(
-        float(exp.get("cost", {}).get("USD", 0)) for exp in job.get("expenses_part", [])
-        )
-    usd_sales = sum(
-        float(sale.get("sale", {}).get("USD", 0)) for sale in job.get("sale_part", [])
-    )
+    usd_expenses = sum(float(e.get("cost", {}).get("USD", 0)) for e in job.get("expenses_part", []))
+    usd_sales    = sum(float(s.get("amount", {}).get("USD", 0)) for s in job.get("sale_part", []))
     return usd_sales - usd_expenses

@@ -62,9 +62,6 @@ export default function JobForm() {
         API.get("/workers").then((res) => setWorkers(res.data));
     }, []);
 
-    const addExpense = () => setExpenses([...expenses, { description: "", cost: { USD: 0 }, worker: ""}]);
-    const addSale = () => setSales([...sales, { description: "", cost: { USD: 0 }, worker: ""}]);
-
     const handleExpenseChange = (index, field, value) => {
         const updated = [...expenses];
         updated[index][field] = value;
@@ -398,11 +395,8 @@ export default function JobForm() {
 
 
             {/* Buttons */}
-            <div className="flex gap-4 mt-6">
-                <button
-                    onClick={saveJob}
-                    className="flex items-center gap-2 bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition"
-                >
+            <div className="job-actions">
+                <button onClick={saveJob} className="bn-btn bn-btn--accent">
                 <Save size={18} /> Save
                 </button>
 
@@ -413,9 +407,7 @@ export default function JobForm() {
                         alert("Job have deleted!");
                     }
                 }}
-                className="flex items-center gap-2 bg-red-600 px-4 rounded-lg hiver:bg-red-700 transform hover:scale-105 transition"
-                >
-                    Delete Job
+                className="bn-btn bn-btn--danger">Delete Job
                 </button>
 
                 <button type="button"
@@ -423,10 +415,10 @@ export default function JobForm() {
                     await API.patch(`/jobs/${jobId}/close`);
                     alert("Job is close.");
                 }}
-                className="flex items-center gap-2 bg-gray-600 px-4 py-2 rounded-lg hover:bg-gray-700 transform hover:scale-105 transition"
-                >
-                    Close the Job
+                className="bn-btn bn-btn--muted"
+                >Close the Job
                 </button>
+
             </div>
             
 

@@ -243,3 +243,87 @@ textarea {
    min-width: 1100px;  /* подгони под свои колонки 
  }
  */
+
+ 
+ /* ==== Bottom actions (Save / Delete / Toggle) ==== */
+.job-actions{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 8px;
+}
+
+/* общая стилизация кнопок внизу */
+.job-actions .bn-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(0,0,0,.33);
+  border: 1px solid rgba(255,255,255,.15);
+  color: #2dd4bf;                 /* базовый акцент */
+  font-weight: 600;
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease,
+    transform .05s ease;
+}
+
+.job-actions .bn-btn:hover{
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.25);
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  transform: translateY(-1px);
+}
+
+.job-actions .bn-btn:active{
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.job-actions .bn-btn:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.job-actions .bn-btn svg{
+  stroke: currentColor; /* иконка под цвет текста */
+}
+
+/* модификаторы */
+.job-actions .bn-btn.bn-btn--accent{
+  color: #2dd4bf;
+  border-color: #2dd4bf5c;
+}
+.job-actions .bn-btn.bn-btn--accent:hover{
+  background: rgba(45,212,191,.13);
+  border-color: #2dd4bf88;
+}
+
+.job-actions .bn-btn.bn-btn--danger{
+  color: #f87171;
+  border-color: #f8717166;
+}
+.job-actions .bn-btn.bn-btn--danger:hover{
+  background: rgba(248,113,113,.12);
+  border-color: #f87171;
+}
+
+.job-actions .bn-btn.bn-btn--muted{
+  color: #e5e7eb;
+  border-color: rgba(170,170,170,.33);
+}
+.job-actions .bn-btn.bn-btn--muted:hover{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(170,170,170,.6);
+}
+
+/* тумблер статуса вправо */
+.job-actions .job-toggle{
+  margin-left: auto;
+}

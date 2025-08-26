@@ -6,10 +6,35 @@ from routes.worker_routes import router as worker_router
 from routes.client_routes import router as client_router
 from routes.docs_routes import router as doc_router
 from routes.export_jobs import router as export_router
+from pymongo import ASCENDING, TEXT
+from config import jobs_collection, sales_collection, expenses_collection, docs_collection
 
 
 
 app = FastAPI(title = "Work Manager API")
+
+@app.on_event("startup")
+def _ensure_indexes():
+    # Jobs
+    jobs_collection.create_index([("job_id", ASCENDING)], unique=True)
+    jobs_collection.create_index([("status", ASCENDING)])
+
+    jobs_collection.create_index([("main_part.client_name", "text")])
+    jobs_collection.create_index([("main_part.created_at", ASCENDING)])
+
+    # Sales
+    sales_collection.create_index([("job_id", ASCENDING)])
+    sales_collection.create_index([("worker_ids", ASCENDING)])
+    sales_collection.create_index([("expense_ids", ASCENDING)])
+
+    # Expenses
+    expenses_collection.create_index([("job_id", ASCENDING)])
+    expenses_collection.create_index([("worker_ids", ASCENDING)])
+    expenses_collection.create_index([("sale_id", ASCENDING)])
+
+    # Docs
+    docs_collection.create_index([("job_id", ASCENDING)])
+    docs_collection.create_index([("upload_date", ASCENDING)])
 
 app.add_middleware(
     CORSMiddleware,
