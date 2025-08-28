@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { Plus, Save, Edit2, Trash2 } from "lucide-react";
 import { toAED } from "../utils/currency";
 import API from "../api";
@@ -9,6 +10,7 @@ import EndSummary from "../components/EndSummary";
 import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
 import TransactionHeader from "../components/TransactionHeader";
+import useLoadJob from "../hooks/useLoadJob";
 import DocSection from "../components/DocSection";
 import {
   validateNonNegativeTwoDecimals,
@@ -22,6 +24,8 @@ import "../styles/endSummary.css";
 import "../styles/docsUploadSection.css";
 
 export default function JobForm() {
+  const { id: routeId } = useParams();
+  const [_id, setMongoId] = useState(null);
   const [jobMongoId, setJobMongoId] = useState("");
   const [bnNumber, setBnNumber] = useState("");
   const [referBN, setReferBN] = useState("");
@@ -57,6 +61,29 @@ export default function JobForm() {
   }, [workers]);
   const [showWorkerModal, setShowWorkerModal] = useState(false);
 
+  useLoadJob(routeId, {
+    setMongoId,
+    setBnNumber,
+    setReferBN,
+    setClient,
+    setCarrier,
+    setShipper,
+    setConsignee,
+    setCommodity,
+    setQuantity,
+    setWeight,
+    setPortLoading,
+    setPortDischardge,
+    setPaymentTerms,
+    setPaymentLocation,
+    setPayerCompany,
+    setRateAEDUSD,
+    setRateRUBUSD,
+    setRateAEDEUR,
+    setExpenses,
+    setSales,
+  });
+
   const fxRates = useMemo(
     () => ({
       AED_to_USD: rateAEDUSD,
@@ -75,6 +102,14 @@ export default function JobForm() {
     updated[index][field] = value;
     setExpenses(updated);
   };
+
+  useEffect(() => {
+    if (routeId && routeId !== "new") setJobMongoId(routeId);
+  }, [routeId]);
+
+  useEffect(() => {
+    if (_id) setJobMongoId(_id);
+  }, [_id]);
 
   const handleSaleChange = (index, field, value) => {
     const updated = [...sales];
@@ -151,7 +186,7 @@ export default function JobForm() {
         alert("Congrats! Job saved.");
     } catch (err) {
         const msg = err?.response?.data?.detail || err.message || "Unknow error";
-        alert(`Save faild: $(msg)`);
+        alert(`Save failed: $(msg)`);
         console.error(err);
     }
   };
@@ -180,7 +215,9 @@ export default function JobForm() {
   return (
     <div className="job-form-wrapper">
       <h2 className="end-summary">
-        <span className="title">Create NEW Job</span>
+        <span className="title">
+            {routeId && routeId !== "new" ? `Job  # ${bnNumber || "-"}` : "Create NEW Job"}
+        </span>
       </h2>
 
       {/* Секция 1: Main Part */}
@@ -204,7 +241,11 @@ export default function JobForm() {
             />
           </div>
           
-          <ClientSelect value={client} onChange={setClient} />
+          <ClientSelect
+            value={typeof client === "object" ? (client.name ?? "") : (client ?? "")}
+            onChange={setClient}
+          />
+
           <input
             className="bg-gray-700 p-2 rounded"
             placeholder="Carrier"
@@ -218,7 +259,7 @@ export default function JobForm() {
             onChange={(e) => setShipper(e.target.value)}
           />
           <ClientSelect
-            value={consignee}
+            value={typeof consignee === "object" ? (consignee.name ?? "") : (consignee ?? "")}
             onChange={setConsignee}
             placeholder="Consignee"
           />
@@ -329,7 +370,7 @@ export default function JobForm() {
           />
           <ClientSelect
             placeholder="Payer Company"
-            value={payerCompany}
+            value={typeof payerCompany === "object" ? (payerCompany.name ?? "") : (payerCompany ?? "")}
             onChange={setPayerCompany}
           />
         </div>
