@@ -5,12 +5,19 @@ from bson import ObjectId
 
 router = APIRouter()
 
+def _normalize(o):
+    if isinstance(o, ObjectId):
+        return str(o)
+    if isinstance(o, list):
+        return [_normalize(x) for x in o]
+    if isinstance(o, dict):
+        return {k: _normalize(v) for k, v in o.items()}
+    return o
+
 @router.get("/")
 def get_all_jobs():
     jobs = list(jobs_collection.find())
-    for job in jobs:
-        job["_id"] = str(job["_id"])
-    return jobs
+    return _normalize(jobs)
 
 @router.post("/")
 def create_job(job: Job):
@@ -22,8 +29,7 @@ def get_job(id: str):
     job = jobs_collection.find_one({"_id": ObjectId(id)})
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    job["_id"] = str(job["_id"])
-    return job
+    return _normalize(job)
 
 @router.patch("/{id}/expenses")
 def add_expense(id: str, expense: ExpensesItem):

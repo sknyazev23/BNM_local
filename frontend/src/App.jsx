@@ -8,6 +8,7 @@ export default function App() {
     <Routes>
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/job/new" element={<JobForm />} />
+      <Route path="/job/:id" element={<JobForm />} />
       <Route path="/clients" element={<ClientsPage />} />
     </Routes>
   );
