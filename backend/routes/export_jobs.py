@@ -34,7 +34,7 @@ def export_jobs(
     elif status == "closed":
         query["status"] = "closed"
     if job_number:
-        query["job_id"] = {"$regex": job_number, "$options": "i"}
+        query["main_part.bn_number"] = {"$regex": job_number, "$options": "i"}
     if date_from or date_to:
         date_query = {}
         if date_from:
@@ -54,7 +54,7 @@ def export_jobs(
     ws.title = "Jobs"
 
     headers = [
-        "№", "Job ID", "Created date", "Client", "Status", "Profit (USD)", "Delivery date", "Workers", "Closed at"
+        "№", "BN Number", "Created date", "Client", "Status", "Profit (USD)", "Delivery date", "Workers", "Closed at"
     ]
 
     ws.append(headers)
@@ -78,7 +78,7 @@ def export_jobs(
 
         row = [
             idx,
-            job.get("job_id", ""),
+            job.get("main_part", {}).get("bn_number", ""),
             created[:10] if isinstance(created, str) else (created.strftime("%Y-%m-%d") if created else ""),
             job.get("main_part", {}).get("client_name", ""),
             job.get("status", ""),
