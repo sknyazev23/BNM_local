@@ -119,9 +119,13 @@ export default function Dashboard() {
       <div className={`job-list ${selectedJob ? "narrow" : ""}`}>
         <div className="job-controls">
           <div className="job-buttons">
-            <button className="create">
+
+            <button type="button" className="create"
+              onClick={() => navigate("/job/new")}
+            >
               <Plus size={16} /> Create
             </button>
+
             <button className="edit">
               <Pencil size={16} /> Edit
             </button>

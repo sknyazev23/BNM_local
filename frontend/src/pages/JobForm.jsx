@@ -97,12 +97,6 @@ export default function JobForm() {
     API.get("/workers").then((res) => setWorkers(res.data));
   }, []);
 
-  const handleExpenseChange = (index, field, value) => {
-    const updated = [...expenses];
-    updated[index][field] = value;
-    setExpenses(updated);
-  };
-
   useEffect(() => {
     if (routeId && routeId !== "new") setJobMongoId(routeId);
   }, [routeId]);
@@ -111,20 +105,14 @@ export default function JobForm() {
     if (_id) setJobMongoId(_id);
   }, [_id]);
 
-  const handleSaleChange = (index, field, value) => {
-    const updated = [...sales];
-    updated[index][field] = value;
-    setSales(updated);
-  };
-
   const removeExpense = (index) =>
     setExpenses(expenses.filter((_, i) => i !== index));
   const removeSale = (index) => setSales(sales.filter((_, i) => i !== index));
 
-  const handleAddWorker = (newWorker) => {
-    setWorkers([...workers, newWorker]);
-    setShowWorkerModal(false);
-  };
+//   const handleAddWorker = (newWorker) => {
+//     setWorkers([...workers, newWorker]);
+//     setShowWorkerModal(false);
+//   };
 
   const saveJob = async () => {
     const jobData = {
@@ -157,7 +145,6 @@ export default function JobForm() {
         const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
         const currency = e.currency || "USD";
         return {
-          id: e.id ?? null,
           description: e.description ?? "",
           cost: { [currency]: amount },
           workers: e.worker ? [String(e.worker)] : [],
@@ -171,7 +158,6 @@ export default function JobForm() {
         const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
         const currency = s.currency || "USD";
         return {
-          id: s.id ?? null,
           description: s.description ?? "",
           amount: { [currency]: amount },
           workers: s.worker ? [String(s.worker)] : [],
@@ -186,7 +172,7 @@ export default function JobForm() {
         alert("Congrats! Job saved.");
     } catch (err) {
         const msg = err?.response?.data?.detail || err.message || "Unknow error";
-        alert(`Save failed: $(msg)`);
+        alert(`Save failed: ${msg}`);
         console.error(err);
     }
   };

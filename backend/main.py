@@ -6,7 +6,7 @@ from routes.worker_routes import router as worker_router
 from routes.client_routes import router as client_router
 from routes.docs_routes import router as doc_router
 from routes.export_jobs import router as export_router
-from pymongo import ASCENDING, TEXT
+from pymongo import ASCENDING
 from config import jobs_collection, sales_collection, expenses_collection, docs_collection
 
 
@@ -16,7 +16,7 @@ app = FastAPI(title = "Work Manager API")
 @app.on_event("startup")
 def _ensure_indexes():
     # Jobs
-    jobs_collection.create_index([("job_id", ASCENDING)], unique=True)
+    jobs_collection.create_index([("main_part.bn_number", ASCENDING)], unique=True)
     jobs_collection.create_index([("status", ASCENDING)])
 
     jobs_collection.create_index([("main_part.client_name", "text")])
