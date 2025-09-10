@@ -11,7 +11,9 @@ import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
 import TransactionHeader from "../components/TransactionHeader";
 import useLoadJob from "../hooks/useLoadJob";
+import useCloseJob, { buildJobData } from "../hooks/useCloseJob";
 import DocSection from "../components/DocSection";
+import { exportJobSummaryToExcel } from "../utils/exportJobExcel";
 import {
   validateNonNegativeTwoDecimals,
   onlyPositiveDecimal4,
@@ -22,6 +24,7 @@ import {
 import "../styles/job.css";
 import "../styles/endSummary.css";
 import "../styles/docsUploadSection.css";
+
 
 export default function JobForm() {
   const { id: routeId } = useParams();
@@ -60,6 +63,10 @@ export default function JobForm() {
     return m;
   }, [workers]);
   const [showWorkerModal, setShowWorkerModal] = useState(false);
+  const [serviceDone, setServiceDone] = useState(false);
+  const [archived, setArchived] = useState(false)
+  const isReadOnly = archived === true;
+
 
   useLoadJob(routeId, {
     setMongoId,
@@ -82,6 +89,8 @@ export default function JobForm() {
     setRateAEDEUR,
     setExpenses,
     setSales,
+    setServiceDone,
+    setArchived,
   });
 
   const fxRates = useMemo(
@@ -93,6 +102,38 @@ export default function JobForm() {
     [rateAEDUSD, rateRUBUSD, rateAEDEUR]
   );
 
+  const buildRaw = () => ({
+    bnNumber, referBN, client, carrier, shipper, consignee,
+    commodity, quantity, weight, portLoading, portDischarge,
+    paymentTerms, paymentLocation, payerCompany,
+    rateAEDUSD, rateRUBUSD, rateAEDEUR, expenses, sales,
+  });
+
+  const build = () => buildJobData(buildRaw());
+
+  // 2) Сохранение
+  const saveJob = async () => {
+    let jobData = build();
+    jobData = { ...jobData, service_not_delivered: serviceDone, archived};
+
+    try {
+      if (jobMongoId) {
+        await API.put(`/jobs/${jobMongoId}`, jobData);
+      } else {
+        const { data } = await API.post("/jobs/", jobData);
+        setJobMongoId(data?._id || "");
+      }
+      setSnapshot();
+      alert("Congrats! Job saved.");
+    } catch (err) {
+      const msg = err?.response?.data?.detail || err.message || "Unknow error";
+      alert(`Save failed: ${msg}`);
+      console.error(err);
+    }
+  };
+
+  const { exitToDashboard, setSnapshot } = useCloseJob(build, saveJob, jobMongoId);
+
   useEffect(() => {
     API.get("/workers").then((res) => setWorkers(res.data));
   }, []);
@@ -102,84 +143,20 @@ export default function JobForm() {
   }, [routeId]);
 
   useEffect(() => {
-    if (_id) setJobMongoId(_id);
+    if (_id) {
+      setJobMongoId(_id);
+      setSnapshot();
+    }
   }, [_id]);
 
   const removeExpense = (index) =>
     setExpenses(expenses.filter((_, i) => i !== index));
   const removeSale = (index) => setSales(sales.filter((_, i) => i !== index));
 
-//   const handleAddWorker = (newWorker) => {
-//     setWorkers([...workers, newWorker]);
-//     setShowWorkerModal(false);
-//   };
-
-  const saveJob = async () => {
-    const jobData = {
-      status: "open",
-      main_part: {
-        client_id:
-          typeof client === "object" ? (client.id ?? client._id) : client || "",
-        client_name: typeof client === "object" ? client.name : client || "",
-        bn_number: bnNumber,
-        refer_bn: referBN,
-        carrier,
-        shipper,
-        consignee,
-        commodities: commodity,
-        quantity: Number(quantity) || 0,
-        weight: weight === "" ? null : Number(weight),
-        port_loading: portLoading,
-        port_discharge: portDischarge,
-        payment_terms: paymentTerms,
-        payment_location: paymentLocation,
-        payer_company: payerCompany,
-        rate_aed_to_usd: parseFloat(rateAEDUSD) || null,
-        rate_rub_to_usd: parseFloat(rateRUBUSD) || null,
-        rate_aed_to_eur: parseFloat(rateAEDEUR) || null,
-      },
-
-      expenses_part: expenses.map((e) => {
-        const qty = Number(e.quantity ?? e.qty ?? 0);
-        const unit = Number(e.unit_cost ?? 0);
-        const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
-        const currency = e.currency || "USD";
-        return {
-          description: e.description ?? "",
-          cost: { [currency]: amount },
-          workers: e.worker ? [String(e.worker)] : [],
-          status: e.status ?? "plan",
-        };
-      }),
-
-      sale_part: sales.map((s) => {
-        const qty = Number(s.qty ?? 0);
-        const unit = Number(s.unit_price ?? 0);
-        const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
-        const currency = s.currency || "USD";
-        return {
-          description: s.description ?? "",
-          amount: { [currency]: amount },
-          workers: s.worker ? [String(s.worker)] : [],
-          status: s.status ?? "plan",
-        };
-      }),
-    };
-
-    try {
-        const { data } = await API.post("/jobs/", jobData);
-        setJobMongoId(data?._id || "")
-        alert("Congrats! Job saved.");
-    } catch (err) {
-        const msg = err?.response?.data?.detail || err.message || "Unknow error";
-        alert(`Save failed: ${msg}`);
-        console.error(err);
-    }
-  };
-
   // итоги по модалкам
   const expenseTotals = useMemo(
-    () => calcTotals(expenses, fxRates, { qtyKey: "quantity", unitKey: "unit_cost" }),
+    () =>
+      calcTotals(expenses, fxRates, { qtyKey: "quantity", unitKey: "unit_cost" }),
     [expenses, fxRates]
   );
 
@@ -198,11 +175,24 @@ export default function JobForm() {
   const showSaleTotals =
     isNonZero(saleTotals.sumAED) || isNonZero(saleTotals.sumUSD);
 
+  // конверт в Excel
+    const exportToExcel = async () => {
+    const raw = {
+      ...buildRaw(),
+      service_not_delivered: serviceDone,
+      archived,
+    };
+    await exportJobSummaryToExcel(
+      raw,
+      bnNumber ? `Job_${bnNumber}.xlsx` : undefined
+    );
+  };
+
   return (
     <div className="job-form-wrapper">
       <h2 className="end-summary">
         <span className="title">
-            {routeId && routeId !== "new" ? `Job  # ${bnNumber || "-"}` : "Create NEW Job"}
+          {routeId && routeId !== "new" ? `Job  # ${bnNumber || "-"}` : "Create NEW Job"}
         </span>
       </h2>
 
@@ -211,24 +201,22 @@ export default function JobForm() {
         <h3 className="text-xl font-semibold mb-4">Main Part</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="row">
-            
             <input
               className="bg-gray-700 p-2 rounded"
               placeholder="BN Number"
               value={bnNumber}
               onChange={(e) => setBnNumber(e.target.value)}
             />
-
             <input
-                className="bg-gray-700 p-2 rounded"
-                placeholder="Refer BN"
-                value={referBN}
-                onChange={(e) => setReferBN(e.target.value)}
+              className="bg-gray-700 p-2 rounded"
+              placeholder="Refer BN"
+              value={referBN}
+              onChange={(e) => setReferBN(e.target.value)}
             />
           </div>
-          
+
           <ClientSelect
-            value={typeof client === "object" ? (client.name ?? "") : (client ?? "")}
+            value={typeof client === "object" ? (client.name ?? "") : client ?? ""}
             onChange={setClient}
           />
 
@@ -245,7 +233,7 @@ export default function JobForm() {
             onChange={(e) => setShipper(e.target.value)}
           />
           <ClientSelect
-            value={typeof consignee === "object" ? (consignee.name ?? "") : (consignee ?? "")}
+            value={typeof consignee === "object" ? (consignee.name ?? "") : consignee ?? ""}
             onChange={setConsignee}
             placeholder="Consignee"
           />
@@ -356,7 +344,9 @@ export default function JobForm() {
           />
           <ClientSelect
             placeholder="Payer Company"
-            value={typeof payerCompany === "object" ? (payerCompany.name ?? "") : (payerCompany ?? "")}
+            value={
+              typeof payerCompany === "object" ? payerCompany.name ?? "" : payerCompany ?? ""
+            }
             onChange={setPayerCompany}
           />
         </div>
@@ -379,9 +369,7 @@ export default function JobForm() {
             return (
               <div className="expense-card-row" key={i}>
                 <span className="ex-cell num">{i + 1}</span>
-                <span className="ex-cell desc">
-                  {expense.description || "—"}
-                </span>
+                <span className="ex-cell desc">{expense.description || "—"}</span>
                 <span className="ex-cell">{qty}</span>
                 <span className="ex-cell">{format4(unit)}</span>
                 <span className="ex-cell">{format4(amount)}</span>
@@ -389,9 +377,7 @@ export default function JobForm() {
                 <span className="ex-cell">{format4(amountAED)}</span>
                 <span className="ex-cell">{expense.seller || "—"}</span>
                 <span className="ex-cell">
-                  {expense.worker
-                    ? workerNameMap[expense.worker] ?? expense.worker
-                    : "—"}
+                  {expense.worker ? workerNameMap[expense.worker] ?? expense.worker : "—"}
                 </span>
 
                 <div className="ex-actions-col">
@@ -421,7 +407,6 @@ export default function JobForm() {
         </div>
 
         <div className="exp-toolbar">
-          {/* вывод Total */}
           {showExpenseTotals && (
             <div className="totals">
               {isNonZero(expenseTotals.sumAED) && (
@@ -458,11 +443,7 @@ export default function JobForm() {
             const unit = Number(sale.unit_price ?? 0);
             const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
             const currency = sale.currency || "USD";
-            const amountAED = toAED(amount, currency, {
-              AED_to_USD: rateAEDUSD,
-              RUB_to_USD: rateRUBUSD,
-              AED_to_EUR: rateAEDEUR,
-            });
+            const amountAED = toAED(amount, currency, fxRates);
 
             return (
               <div className="expense-card-row" key={i}>
@@ -475,9 +456,7 @@ export default function JobForm() {
                 <span className="ex-cell">{format4(amountAED)}</span>
                 <span className="ex-cell"></span>
                 <span className="ex-cell">
-                  {sale.worker
-                    ? workerNameMap[sale.worker] ?? sale.worker
-                    : "—"}
+                  {sale.worker ? workerNameMap[sale.worker] ?? sale.worker : "—"}
                 </span>
 
                 <div className="ex-actions-col">
@@ -507,7 +486,6 @@ export default function JobForm() {
         </div>
 
         <div className="exp-toolbar">
-          {/* вывод Total Sale */}
           {showSaleTotals && (
             <div className="totals">
               {isNonZero(saleTotals.sumAED) && (
@@ -549,35 +527,64 @@ export default function JobForm() {
 
       {/* Buttons */}
       <div className="job-actions">
-        <button onClick={saveJob} className="bn-btn bn-btn--accent">
-          <Save size={18} /> Save
-        </button>
+        {!jobMongoId ? (
+          // NEW BN
+          <div className="actions-left">
+            <button onClick={saveJob} className="bn-btn bn-btn--accent">
+              <Save size={18} /> Save
+            </button>
 
-        <button
-          type="button"
-          onClick={async () => {
-            if (!jobMongoId) return;
-            if (confirm("BROTIK, Are you SURE?")) {
-              await API.delete(`/jobs/${jobMongoId}`);
-              alert("Job have deleted!");
-            }
-          }}
-          className="bn-btn bn-btn--danger"
-        >
-          Delete Job
-        </button>
+            <button type="button" onClick={exitToDashboard} className="bn-btn bn-btn--muted">
+              Close & return to Dashboard
+            </button>
+          </div>
+        ) : (
+          <>
+          {/* existed BN */}
+          {/* buttons _left */}
+          <div className="actions-left">
+            <button type="button" onClick={exitToDashboard} className="bn-btn bn-btn-muted">
+              Close & return to Dashboard
+            </button>
 
-        <button
-          type="button"
-          onClick={async () => {
-            if (!jobMongoId) return;
-            await API.patch(`/jobs/${jobMongoId}/close`);
-            alert("Job is close.");
-          }}
-          className="bn-btn bn-btn--muted"
-        >
-          Close the Job
-        </button>
+            <button type="button" onClick={async () => {
+              if (!jobMongoId) return;
+              if (confirm("BROTIK, Are you SURE?")) {
+                try {
+                  await API.delete(`/jobs/${jobMongoId}`);
+                  alert("Job have deleted!");
+                  exitToDashboard();
+                } catch (err) {
+                  const msg = err?.response?.data?.detail || err.message || "Delete failed";
+                  alert(msg);
+                  console.error(err);
+                }
+              }
+            }}
+            className="bn-btn bn-btn--danger"
+            >
+              Delete Job
+            </button>
+
+            <button type="button" onClick={exportToExcel} className="bn-btn bn-btn-muted">
+              Export to Excel
+            </button>
+          </div>
+
+          {/* тумблеры */}
+          <div className="toggles">
+            <label className="toggle">
+              <input type="checkbox" checked={serviceDone} onChange={(e) => setServiceDone(e.target.checked)} />
+              <span>Serviсe done</span>
+             </label>
+
+            <label className="toggle">
+              <input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} />
+              <span>Archive (lock editing)</span>
+            </label>
+          </div>
+        </>  
+        )}
       </div>
 
       {/* Рендер модалок */}
@@ -596,12 +603,8 @@ export default function JobForm() {
             setShowExpenseModal(false);
           }}
           workers={workers}
-          existingData={
-            currentExpense !== null ? expenses[currentExpense] : {}
-          }
-          displayNo={
-            currentExpense !== null ? currentExpense + 1 : expenses.length + 1
-          }
+          existingData={currentExpense !== null ? expenses[currentExpense] : {}}
+          displayNo={currentExpense !== null ? currentExpense + 1 : expenses.length + 1}
           sales={sales}
           rates={fxRates}
         />
@@ -623,9 +626,7 @@ export default function JobForm() {
           }}
           workers={workers}
           existingData={currentSale !== null ? sales[currentSale] : {}}
-          displayNo={
-            currentSale !== null ? currentSale + 1 : sales.length + 1
-          }
+          displayNo={currentSale !== null ? currentSale + 1 : sales.length + 1}
           rates={fxRates}
         />
       )}

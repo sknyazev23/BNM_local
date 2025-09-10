@@ -29,7 +29,7 @@ def _ensure_indexes():
 
     # Expenses
     expenses_collection.create_index([("job_id", ASCENDING)])
-    expenses_collection.create_index([("worker_ids", ASCENDING)])
+    expenses_collection.create_index([("workers", ASCENDING)])
     expenses_collection.create_index([("sale_id", ASCENDING)])
 
     # Docs

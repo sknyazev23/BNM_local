@@ -33,7 +33,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   const isRequiredText = (v) => typeof v === "string" && v.trim().length > 0;
 
   const getIsPlan = (ed = {}) => typeof ed.is_plan === "boolean" ? ed.is_plan
-    : typeof ed.status === "string" ? ed.status.toLwerCase() === "plan" : true;
+    : typeof ed.status === "string" ? ed.status.toLowerCase() === "plan" : true;
   
 
   useEffect(() => {

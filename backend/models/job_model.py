@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
-from datetime import datetime, timezone
+from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
+from typing import Optional, List, Dict, Literal
+from datetime import datetime, timezone, date
 
 
 # основной блок данных
@@ -30,10 +30,56 @@ class MainPart(BaseModel):
 # расходы
 class ExpensesItem(BaseModel):
     id: Optional[str] = None
+
     description: str
-    cost: Dict[str, float]  # {"USD": 100, "AED": 367}
-    workers: List[str]  # список worker_id
-    status: str  # plan/fact
+    quantity: int = 0
+    unit_cost: float = 0.0
+    currency: Literal["USD", "AED", "EUR", "RUB"]
+    seller: Optional[str] = None
+    cost: Dict[str, float] = Field(default_factory=dict)
+    workers: List[str] = Field(default_factory=list)
+    status: Literal["plan", "fact"] = "plan"
+
+    sale_id: Optional[str] = Field(default=None, alias="binded_sale")
+    payment_note: Optional[str] = None
+    payment_date: Optional[date] = None
+
+    amount: Optional[float] = None
+    amount_aed: Optional[float] = None
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc))
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def _status_norm(cls, v):
+        if isinstance(v, str):
+            v = v.strip().lower()
+            return "fact" if v == "fact" else "plan"
+        return "plan"
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def _currency_upper(cls, v):
+        return v.upper() if isinstance(v, str) else v
+
+    @field_validator("workers", mode="before")
+    @classmethod
+    def _workers_to_str(cls, v):
+        if v is None:
+            return []
+        return [str(x) for x in (v if isinstance(v, list) else [v])]
+
+    @model_validator(mode="after")
+    def _fill_amount(self):
+        if self.amount is None:
+            try:
+                self.amount = round(float(self.quantity) * float(self.unit_cost), 4)
+            except Exception:
+                self.amount = 0.0
+        return self
 
 # доходы
 class SaleItem(BaseModel):
@@ -50,7 +96,11 @@ class ProfitItem(BaseModel):
 
 # основная модель Job
 class Job(BaseModel):
-    status: str = "open"  # open/close
+    status: str = "open"
+
+    service_not_delivered: bool = False
+    archived: bool = False
+
     main_part: MainPart
     expenses_part: Optional[List[ExpensesItem]] = []
     sale_part: Optional[List[SaleItem]] = []
