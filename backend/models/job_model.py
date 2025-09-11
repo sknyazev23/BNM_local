@@ -47,8 +47,8 @@ class ExpensesItem(BaseModel):
     amount: Optional[float] = None
     amount_aed: Optional[float] = None
 
-    created_at: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -97,11 +97,15 @@ class ProfitItem(BaseModel):
 # основная модель Job
 class Job(BaseModel):
     status: str = "open"
-
+    main_part: MainPart
     service_not_delivered: bool = False
     archived: bool = False
-
-    main_part: MainPart
+    service_done: Optional[bool] = None
+    archived: Optional[bool] = None
+    delivery_date: Optional[datetime] = None
     expenses_part: Optional[List[ExpensesItem]] = []
     sale_part: Optional[List[SaleItem]] = []
     profit_part: Optional[List[ProfitItem]] = []
+
+    profit_usd: Optional[float] = None
+    workers: Optional[List[str]] = None

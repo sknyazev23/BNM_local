@@ -4,6 +4,7 @@ import { Plus, Save, Edit2, Trash2 } from "lucide-react";
 import { toAED } from "../utils/currency";
 import API from "../api";
 import { format4 } from "../utils/numberFormat";
+import { buildJobApiData } from "../utils/buildJobApiData";
 import ClientSelect from "../components/ClientSelect";
 import { calcTotals } from "../utils/totalModals";
 import EndSummary from "../components/EndSummary";
@@ -11,7 +12,7 @@ import AddExpenseModal from "../components/AddExpenseModal";
 import AddSaleModal from "../components/AddSaleModal";
 import TransactionHeader from "../components/TransactionHeader";
 import useLoadJob from "../hooks/useLoadJob";
-import useCloseJob, { buildJobData } from "../hooks/useCloseJob";
+import useCloseJob from "../hooks/useCloseJob";
 import DocSection from "../components/DocSection";
 import { exportJobSummaryToExcel } from "../utils/exportJobExcel";
 import {
@@ -21,6 +22,7 @@ import {
   decimal4Blur,
   decimal4Change,
 } from "../utils/numberValidation";
+import { ddmmyyyyToISO, isoToDDMMYYYY } from "../utils/dateFmt";
 import "../styles/job.css";
 import "../styles/endSummary.css";
 import "../styles/docsUploadSection.css";
@@ -62,13 +64,12 @@ export default function JobForm() {
     }
     return m;
   }, [workers]);
-  const [showWorkerModal, setShowWorkerModal] = useState(false);
-  const [serviceDone, setServiceDone] = useState(false);
-  const [archived, setArchived] = useState(false)
-  const isReadOnly = archived === true;
+ 
+  const [serviceDone, setServiceDone] = useState(); //DD-MM-YYYY
+  const [archived, setArchived] = useState(false); 
+  const isReadOnly = !!archived
 
-
-  useLoadJob(routeId, {
+  const { loaded } = useLoadJob(routeId, {
     setMongoId,
     setBnNumber,
     setReferBN,
@@ -106,27 +107,38 @@ export default function JobForm() {
     bnNumber, referBN, client, carrier, shipper, consignee,
     commodity, quantity, weight, portLoading, portDischarge,
     paymentTerms, paymentLocation, payerCompany,
-    rateAEDUSD, rateRUBUSD, rateAEDEUR, expenses, sales,
+    rateAEDUSD, rateRUBUSD, rateAEDEUR, expenses, sales, serviceDone,
   });
 
-  const build = () => buildJobData(buildRaw());
+  const build = buildRaw;
 
   // 2) Сохранение
   const saveJob = async () => {
-    let jobData = build();
-    jobData = { ...jobData, service_not_delivered: serviceDone, archived};
+    if (!client || (typeof client === "object" && !client.name)) {
+      alert("Select client before saving");
+      return;
+    }
+
+    const wasNew = !jobMongoId;
+    const jobData = buildJobApiData(buildRaw(), { serviceDone, archived });
 
     try {
-      if (jobMongoId) {
-        await API.put(`/jobs/${jobMongoId}`, jobData);
-      } else {
+      if (wasNew) {
         const { data } = await API.post("/jobs/", jobData);
         setJobMongoId(data?._id || "");
+      } else {
+        await API.put(`/jobs/${jobMongoId}`, jobData);
       }
+
       setSnapshot();
+
       alert("Congrats! Job saved.");
+
+      if (wasNew) {
+        await exitToDashboard();
+      }
     } catch (err) {
-      const msg = err?.response?.data?.detail || err.message || "Unknow error";
+      const msg = err?.response?.data?.detail || err.message || "Unknown error";
       alert(`Save failed: ${msg}`);
       console.error(err);
     }
@@ -143,11 +155,9 @@ export default function JobForm() {
   }, [routeId]);
 
   useEffect(() => {
-    if (_id) {
-      setJobMongoId(_id);
-      setSnapshot();
-    }
-  }, [_id]);
+    if (loaded) setSnapshot();
+  }, [loaded, setSnapshot]);
+
 
   const removeExpense = (index) =>
     setExpenses(expenses.filter((_, i) => i !== index));
@@ -178,10 +188,7 @@ export default function JobForm() {
   // конверт в Excel
     const exportToExcel = async () => {
     const raw = {
-      ...buildRaw(),
-      service_not_delivered: serviceDone,
-      archived,
-    };
+      ...buildRaw(), archived };
     await exportJobSummaryToExcel(
       raw,
       bnNumber ? `Job_${bnNumber}.xlsx` : undefined
@@ -543,7 +550,7 @@ export default function JobForm() {
           {/* existed BN */}
           {/* buttons _left */}
           <div className="actions-left">
-            <button type="button" onClick={exitToDashboard} className="bn-btn bn-btn-muted">
+            <button type="button" onClick={exitToDashboard} className="bn-btn bn-btn--muted">
               Close & return to Dashboard
             </button>
 
@@ -566,17 +573,22 @@ export default function JobForm() {
               Delete Job
             </button>
 
-            <button type="button" onClick={exportToExcel} className="bn-btn bn-btn-muted">
+            <button type="button" onClick={exportToExcel} className="bn-btn bn-btn--muted">
               Export to Excel
             </button>
           </div>
 
-          {/* тумблеры */}
+          {/* дата & тумблер */}
           <div className="toggles">
-            <label className="toggle">
-              <input type="checkbox" checked={serviceDone} onChange={(e) => setServiceDone(e.target.checked)} />
-              <span>Serviсe done</span>
-             </label>
+
+            <label className="s-date">
+              <span>Service done</span>
+              <input type="date"
+              value={ddmmyyyyToISO(serviceDone)}
+              onChange={(e) => setServiceDone(isoToDDMMYYYY(e.target.value))}
+              disabled={isReadOnly}
+              />
+            </label>
 
             <label className="toggle">
               <input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} />

@@ -31,7 +31,7 @@ h2, h3 {
 }
 
 input, select, textarea {
-  background-color: #1a1a1a;
+  background-color: #0f1f1f;
   color: #ffffff;
   border: 1px solid #555;
   border-radius: 8px;
@@ -134,7 +134,7 @@ textarea {
 }
 
 .rates-row input {
-  background-color: #1a1a1a;
+  background-color: #0f1f1f;
   color: #fff;
   border: 1px solid #555;
   border-radius: 8px;
@@ -153,13 +153,13 @@ textarea {
 
   padding:2px 2px;
   margin:3px 0;
-  background:#1a1a1a;
+  background:#0f1f1f;
   border:1px solid #555;
   border-radius:8px;
   transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 .expense-card-row:hover{
-  background:#02292e;
+  background:#309374;
   border-color:#777;
   box-shadow:0 0 0 2px rgba(255,255,255,.06);
 }
@@ -203,7 +203,7 @@ textarea {
   align-items:center;
   gap:16px;
   margin:8px 10px 22px;
-  flex-wrap:wrap;                 /* перенос на узких экранах */
+  flex-wrap:wrap;
 }
 
 .exp-toolbar .totals{
@@ -267,6 +267,7 @@ textarea {
   display:flex;
   gap:20px;
   align-items:center;
+  color: #02292e;
 }
 
 .toggle{
@@ -275,7 +276,14 @@ textarea {
   align-items:center;
   font-size:14px;
   white-space:nowrap;
-  color: #02292e;
+}
+
+.s-date{
+  width:12ch;
+  border-radius:6px;
+  text-align:center;
+  opacity: .9;
+  
 }
 
 .toggle input{

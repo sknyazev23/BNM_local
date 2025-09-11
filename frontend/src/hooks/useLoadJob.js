@@ -1,9 +1,19 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
+import { isoToDDMMYYYY } from "../utils/dateFmt";
 import API from "../api";
 
 export default function useLoadJob(routeId, setters) {
+  const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
-    if (!routeId || routeId === "new") return;
+    let alive = true;
+    setLoaded(false);
+
+    if (!routeId || routeId === "new") {
+      if (alive) setLoaded(true);
+      return () => { alive = false; };
+    }
 
     (async () => {
       try {
@@ -12,82 +22,117 @@ export default function useLoadJob(routeId, setters) {
         try {
           res = await API.get(`/jobs/${routeId}`);
         } catch {
-          // 2-я попытка (если есть альтернативный эндпоинт)
+          // 2-я попытка (если вдруг у тебя есть альтернативный эндпоинт)
           res = await API.get(`/jobs/by-id/${routeId}`);
         }
+        if (!alive) return;
+
         const job = res.data || {};
         const mp = job.main_part || {};
 
-        if (setters.setMongoId) setters.setMongoId(job._id ?? routeId);
+        // _id
+        setters.setMongoId?.(job._id ?? routeId);
 
-        // main_part
-        setters.setBnNumber(mp.bn_number || "");
-        setters.setReferBN(mp.refer_bn || "");
+        // --- main_part
+        setters.setBnNumber?.(mp.bn_number || "");
+        setters.setReferBN?.(mp.refer_bn || "");
+
         if (mp.client_name) {
-          // если ClientSelect ждёт объект {id,name}
-          setters.setClient({ id: mp.client_id || "", name: mp.client_name });
+          setters.setClient?.({ id: mp.client_id || "", name: mp.client_name });
         } else {
-          setters.setClient("");
+          setters.setClient?.("");
         }
-        setters.setCarrier(mp.carrier || "");
-        setters.setShipper(mp.shipper || "");
-        setters.setConsignee(mp.consignee || "");
-        setters.setCommodity(mp.commodities || "");
-        setters.setQuantity(String(mp.quantity ?? ""));
-        setters.setWeight(mp.weight == null ? "" : String(mp.weight));
-        setters.setPortLoading(mp.port_loading || "");
-        // соблюдаем текущее имя сеттера из формы
-        setters.setPortDischardge(mp.port_discharge || "");
-        setters.setPaymentTerms(mp.payment_terms || "");
-        setters.setPaymentLocation(mp.payment_location || "");
-        setters.setPayerCompany(mp.payer_company || "");
 
-        setters.setRateAEDUSD(
+        setters.setCarrier?.(mp.carrier || "");
+        setters.setShipper?.(mp.shipper || "");
+        setters.setConsignee?.(mp.consignee || "");
+        setters.setCommodity?.(mp.commodities || "");
+        setters.setQuantity?.(mp.quantity != null ? String(mp.quantity) : "");
+        setters.setWeight?.(mp.weight != null ? String(mp.weight) : "");
+        setters.setPortLoading?.(mp.port_loading || "");
+        setters.setPortDischardge?.(mp.port_discharge || "");
+        setters.setPaymentTerms?.(mp.payment_terms || "");
+        setters.setPaymentLocation?.(mp.payment_location || "");
+        setters.setPayerCompany?.(mp.payer_company || "");
+
+        setters.setRateAEDUSD?.(
           mp.rate_aed_to_usd != null ? String(mp.rate_aed_to_usd) : "3.6700"
         );
-        setters.setRateRUBUSD(
+        setters.setRateRUBUSD?.(
           mp.rate_rub_to_usd != null ? String(mp.rate_rub_to_usd) : ""
         );
-        setters.setRateAEDEUR(
+        setters.setRateAEDEUR?.(
           mp.rate_aed_to_eur != null ? String(mp.rate_aed_to_eur) : ""
         );
 
-        // маппинг списков для UI-схемы
-        const mapExpense = (e) => {
-          const dict = e?.cost || {};
-          const currency = ("USD" in dict && "USD") || Object.keys(dict)[0] || "USD";
-          const amount = Number(dict[currency] || 0);
+        const rawDD = job.delivery_date;                         // может быть "2025-09-10T..." или { $date: "..." }
+        const iso = typeof rawDD === "string" ? rawDD : rawDD?.$date;
+        const ymd = iso ? String(iso).slice(0, 10) : "";         // "YYYY-MM-DD"
+        setters.setServiceDone?.(isoToDDMMYYYY(ymd));            // -> "DD-MM-YYYY"
+
+        setters.setArchived?.(Boolean(job.archived));   
+
+        // --- маппинг Expenses
+        const mapExpense = (e = {}) => {
+          // предпочитаем явные поля, иначе откатываемся к словарю cost
+          const qty = e.quantity != null ? Number(e.quantity) : 1;
+          const unit = e.unit_cost != null ? Number(e.unit_cost) : undefined;
+
+          const dict = e.cost || {};
+          const curFromCost = ("USD" in dict && "USD") || Object.keys(dict)[0];
+          const amountFromCost = dict[curFromCost || ""] != null ? Number(dict[curFromCost]) : undefined;
+
+          const currency = (e.currency || curFromCost || "USD").toUpperCase();
+          const unit_cost = unit != null ? unit : (amountFromCost != null ? amountFromCost : 0);
+
           return {
-            description: e?.description || "",
-            quantity: 1,
-            unit_cost: amount,
+            description: e.description || "",
+            quantity: Number.isFinite(qty) ? qty : 0,
+            unit_cost: Number.isFinite(unit_cost) ? unit_cost : 0,
             currency,
-            seller: e?.seller || "",
-            worker: (e?.workers && e.workers[0]) || "",
-            status: e?.status || "plan",
+            seller: e.seller || "",
+            worker: (Array.isArray(e.workers) && e.workers[0]) || e.worker || "",
+            status: (e.status || "plan").toString().toLowerCase() === "fact" ? "fact" : "plan",
           };
         };
 
-        const mapSale = (s) => {
-          const dict = s?.amount || {};
-          const currency = ("USD" in dict && "USD") || Object.keys(dict)[0] || "USD";
-          const amount = Number(dict[currency] || 0);
+        // --- маппинг Sales
+        const mapSale = (s = {}) => {
+          const qty = s.qty != null ? Number(s.qty) : undefined;
+          const up  = s.unit_price != null ? Number(s.unit_price) : undefined;
+
+          const dict = s.amount || {};
+          const curFromAmount = ("USD" in dict && "USD") || Object.keys(dict)[0];
+          const amountFromDict = dict[curFromAmount || ""] != null ? Number(dict[curFromAmount]) : undefined;
+
+          const currency = (s.currency || curFromAmount || "USD").toUpperCase();
+
+          // если нет unit_price/qty — положим всё в unit_price, qty=1 (как раньше), иначе оставим как есть
+          const unit_price = up != null ? up : (amountFromDict != null ? amountFromDict : 0);
+          const qtyFinal   = qty != null ? qty : 1;
+
           return {
-            description: s?.description || "",
-            qty: 1,
-            unit_price: amount,
+            description: s.description || "",
+            qty: Number.isFinite(qtyFinal) ? qtyFinal : 0,
+            unit_price: Number.isFinite(unit_price) ? unit_price : 0,
             currency,
-            worker: (s?.workers && s.workers[0]) || "",
-            status: s?.status || "plan",
+            worker: (Array.isArray(s.workers) && s.workers[0]) || s.worker || "",
+            status: (s.status || "plan").toString().toLowerCase() === "fact" ? "fact" : "plan",
           };
         };
 
-        setters.setExpenses((job.expenses_part || []).map(mapExpense));
-        setters.setSales((job.sale_part || []).map(mapSale));
+        setters.setExpenses?.((job.expenses_part || []).map(mapExpense));
+        setters.setSales?.((job.sale_part || []).map(mapSale));
       } catch (err) {
         console.error("Failed to load job", err);
         alert("Не удалось загрузить Job");
+      } finally {
+        if (alive) setLoaded(true);
       }
     })();
-  }, [routeId]);
+
+    return () => { alive = false; };
+  }, [routeId]); // setters можно опустить из deps, если они стабильны
+
+  return { loaded };
 }
