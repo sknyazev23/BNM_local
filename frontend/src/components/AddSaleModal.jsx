@@ -3,9 +3,10 @@ import API from "../api";
 import { toAED } from "../utils/currency";
 import { format4 } from "../utils/numberFormat";
 import { onlyPositiveDecimal4, blockPaste, decimal4Change, decimal4Blur } from "../utils/numberValidation";
+import PlanFactToggle from "./PlanFactToggle";
 import "../styles/modal.css";
 
-export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates }) {
+export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, jobId }) {
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
@@ -18,17 +19,15 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
     return Number.isFinite(res) ? res : 0;
   }, [formData.qty, formData.unit_price]);
 
-  const isRequiredText = (v) => typeof v === "string" && v.trim().length > 0;
-
 
   // показываем числа ТОЛЬКО когда оба поля > 0
-  const showAmmounts = Number(formData.qty) > 0 && Number(formData.unit_price) > 0;
-  const amountStr = showAmmounts ? format4(amount) : "";
+  const showAmounts = Number(formData.qty) > 0 && Number(formData.unit_price) > 0;
+  const amountStr = showAmounts ? format4(amount) : "";
   const amountAED = useMemo(() => (
-    showAmmounts ? toAED(amount, formData.currency || "USD", rates) : 0
-  ), [showAmmounts, amount, formData.currency, rates]);
+    showAmounts ? toAED(amount, formData.currency || "USD", rates) : 0
+  ), [showAmounts, amount, formData.currency, rates]);
 
-  const amountAEDStr = showAmmounts ? format4(amountAED) : "";
+  const amountAEDStr = showAmounts ? format4(amountAED) : "";
 
 
   useEffect(() => {
@@ -39,11 +38,15 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
     }
   }, [isOpen]);
 
-  // загрузка данных при открытии (включая доп. поля)
+
+  // Open and load
   useEffect(() => {
-    setFormData(existingData || {});
+    setFormData({ ...existingData,
+      status: existingData.status || "plan"
+    });
     setIsEdited(false);
   }, [existingData, isOpen]);
+
 
   // отслеживаем изменения
   const handleChange = (field, value) => {
@@ -51,31 +54,68 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
     setIsEdited(true);
   };
 
-  // сохранение
+  // Form of Sale modal
+  const formSale = () => {
+    if (!formData.description?.trim()) {
+      alert("Sale description is required!");
+      return null;
+    }
+    const qty = parseInt(formData.qty || 0, 10);
+    const unit_price_origin = parseFloat(formData.unit_price || 0);
+    const currency_origin = formData.currency || "USD";
+    const amount_origin = qty * unit_price_origin || 0;
+    const amount_aed = toAED(amount_origin, currency_origin, rates);
+
+    const worker_ids = [
+      formData.worker || null,
+      formData.collaboration || null
+    ].filter(Boolean);
+
+    const mainWorker = workersList.find(w => (w._id || w.id) == formData.worker);
+    const worker_name = mainWorker?.name || null; 
+
+    return {
+      job_id: jobId,
+      description: formData.description.trim(),
+      qty,
+      unit_price_origin,
+      currency_origin,
+      amount_origin,
+      amount_aed,
+      worker_ids,
+      worker_name,
+      status: formData.status || "plan",
+      date_client_payment: formData.date_client_payment || null,
+      client_payment_note: formData.client_payment_note?.trim() || null,
+      rate_of_payment: parseFloat(formData.rate_of_payment || 0) || null,
+      edit_date: new Date().toISOString(),
+    };
+  };
+
+  // save
   const handleSave = (e) => {
     e.preventDefault();
-    if (!isRequiredText(formData.description)) {
-      alert("Sale description is required!");
-      return;
-    }
-    const amount_aed = toAED(amount, formData.currency || "USD", rates);
-    onSave({ ...formData, amount, amountAED });
+    const payload = formSale();
+    if (!payload) return;
+
+    console.log("Real payload -> MongoDB: ", payload);
+    onSave(payload);
     setIsEdited(false);
   };
+
 
   const handleClose = () => {
     if (isEdited) {
       if (confirm("Save changes before closing?")) {
-        if (!isRequiredText(formData.description)) {
-          alert("Sale description is required!");
-          return;
-        }
-        const amount_aed = toAED(amount, formData.currency || "USD", rates);
-        onSave({ ...formData, amount, amountAED });
+        const payload = formSale();
+        if(!payload) return;
+
+        onSave(payload);
       }
     }
     onClose();
   };
+
 
   if (!isOpen) return null;
 
@@ -100,7 +140,7 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
               type="number"
               min="0"
               step="1"
-              value={formData.qty ?? ""}
+              value={formData.qty != null ? formData.qty : ""}
               onKeyDown={(e) => {
                 if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
               }}
@@ -216,11 +256,16 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
         </form>
 
         <div className="modal-date">
+          <PlanFactToggle
+            value={formData.status === "plan"}
+            onChange={(newValue) => handleChange("status", newValue ? "plan" : "fact")} />
+          <div className="date-text">
           {new Date().toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "long",
-            year: "numeric",
+            year: "numeric"
           })}
+          </div>
         </div>
       </div>
     </div>

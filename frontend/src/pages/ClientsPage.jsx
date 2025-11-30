@@ -27,7 +27,7 @@ export default function ClientsPage() {
 
   const handleExportExcel = () => exportClientsToExcel(clients);
 
-    // универсальный UPDATE с fallback'ами
+    //UPDATE с fallback'ами
   const updateClient = async (id, payload) => {
     const tries = [
       { m: "patch", url: `/clients/${id}/` },
@@ -50,7 +50,7 @@ export default function ClientsPage() {
     throw lastErr;
   };
 
-  // универсальный DELETE с fallback'ами
+  //  DELETE с fallback
   const removeClient = async (id) => {
     const tries = [
       { fn: () => API.delete(`/clients/${id}/`) },

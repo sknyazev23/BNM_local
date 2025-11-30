@@ -15,34 +15,20 @@ export default function Dashboard() {
   const [sortOrder, setSortOrder] = useState("asc");
   const [showWorkerModal, setShowWorkerModal] = useState(false);
 
-  // 👇 мапа id → name для воркеров
-  const [workerMap, setWorkerMap] = useState({});
-
   const navigate = useNavigate();
   const navigateToClients = () => navigate("/clients");
 
   useEffect(() => {
     fetchJobs();
-    fetchWorkers(); // загрузим имена воркеров
   }, []);
 
   const fetchJobs = async () => {
     const res = await API.get("/jobs/");
-    setJobs(res.data);
-    setFilteredJobs(res.data);
+    setJobs(res.data || []);
+    setFilteredJobs(res.data || []);
   };
 
-  const fetchWorkers = async () => {
-    const res = await API.get("/workers");
-    const map = {};
-    (res.data || []).forEach((w) => {
-      const id = w.id ?? w.worker_id ?? w._id;
-      if (id != null) map[id] = w.name ?? String(id);
-    });
-    setWorkerMap(map);
-  };
-
-  // --- helpers (только для отображения)
+  // форматирование дат из БД
   const fmtDate = (d) => {
     if (!d) return "—";
     const raw = typeof d === "string" ? d : d?.$date ?? d;
@@ -52,36 +38,14 @@ export default function Dashboard() {
     return isNaN(+dt) ? "—" : dt.toISOString().slice(0, 10);
   };
 
-  const workerNamesForJob = (job) => {
-    const set = new Set();
-    (job.expenses_part || []).forEach((e) =>
-      (e.workers || []).forEach((wid) => set.add(workerMap[wid] ?? String(wid)))
-    );
-    (job.sale_part || []).forEach((s) =>
-      (s.workers || []).forEach((wid) => set.add(workerMap[wid] ?? String(wid)))
-    );
-    return Array.from(set);
-  };
-
-  const calcProfitUSD = (job) => {
-    const exp = (job.expenses_part || []).reduce(
-      (sum, e) => sum + Number((e.cost || {}).USD || 0),
-      0
-    );
-    const sales = (job.sale_part || []).reduce(
-      (sum, s) => sum + Number((s.amount || {}).USD || 0),
-      0
-    );
-    const p = sales - exp;
-    return Number.isFinite(p) ? p.toFixed(2) : "—";
-  };
-
+  // сортировка по плоским полям
   const toggleSort = (field) => {
     const order = sortBy === field && sortOrder === "asc" ? "desc" : "asc";
     const getter = (row) => {
-      if (field === "created_at") return row.main_part?.created_at || "";
-      if (field === "bn_number") return row.main_part?.bn_number || "";
-      if (field === "client_name") return row.main_part?.client_name || "";
+      if (field === "created_at")  return row.created_at  || "";
+      if (field === "bn_number")   return row.bn_number   || "";
+      if (field === "client_name") return row.client_name || "";
+      if (field === "status")      return row.archived ? "archived" : "open";
       return row[field] ?? "";
     };
     const sorted = [...filteredJobs].sort((a, b) => {
@@ -95,22 +59,22 @@ export default function Dashboard() {
     setFilteredJobs(sorted);
   };
 
+  // поиск по bn_number / client_name / status
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
-    const filtered = jobs.filter((job) => {
-      const bn = job.main_part?.bn_number?.toLowerCase() || "";
-      const client = job.main_part?.client_name?.toLowerCase() || "";
-      const status = job.status?.toLowerCase() || "";
+    const filtered = (jobs || []).filter((job) => {
+      const bn     = (job.bn_number   || "").toLowerCase();
+      const client = (job.client_name || "").toLowerCase();
+      const status = job.archived ? "archived" : "open";
       return bn.includes(term) || client.includes(term) || status.includes(term);
     });
     setFilteredJobs(filtered);
   };
 
-  const handleAddWorker = async (newWorker) => {
-    console.log("Worker saved: ", newWorker);
+  const handleAddWorker = async () => {
+    // после добавления — просто закрываем модалку, данные в таблице берём из jobs
     setShowWorkerModal(false);
-    await fetchWorkers();
   };
 
   return (
@@ -119,13 +83,9 @@ export default function Dashboard() {
       <div className={`job-list ${selectedJob ? "narrow" : ""}`}>
         <div className="job-controls">
           <div className="job-buttons">
-
-            <button type="button" className="create"
-              onClick={() => navigate("/job/new")}
-            >
+            <button type="button" className="create" onClick={() => navigate("/job/new")}>
               <Plus size={16} /> Create
             </button>
-
             <button className="edit">
               <Pencil size={16} /> Edit
             </button>
@@ -171,22 +131,32 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {filteredJobs.slice(0, 20).map((job, index) => {
-              const workerNames = workerNamesForJob(job);
+              const jobId = job.id || job._id || String(index);
+              const workers = Array.isArray(job.workers) ? job.workers : [];
+              const profitNum = Number(job.profit_usd);
+              const profitText = Number.isFinite(profitNum) ? profitNum.toLocaleString() : "—";
+
               return (
                 <tr
-                  key={job._id}
+                  key={jobId}
                   onClick={() => setSelectedJob(job)}
-                  onDoubleClick={() => navigate(`/job/${job._id}`)}
+                  onDoubleClick={() => navigate(`/job/${jobId}`)}
                 >
                   <td>{index + 1}</td>
-                  <td>{job.main_part?.bn_number || "—"}</td>
-                  <td>{job.main_part?.client_name || "—"}</td>
-                  <td>{job.status || "—"}</td>
-                  <td>{fmtDate(job.main_part?.created_at)}</td>
-                  <td>{fmtDate(job.main_part?.closed_at)}</td>
-                  <td>{fmtDate(job.main_part?.delivery_to_client_date)}</td>
-                  <td>{workerNames.length ? workerNames.join(", ") : "—"}</td>
-                  <td>{calcProfitUSD(job)}</td>
+                  <td>{job.bn_number || "—"}</td>
+                  <td>{job.client_name || "—"}</td>
+                  <td>{job.archived ? "Archived" : "Open"}</td>
+                  <td>{fmtDate(job.created_at)}</td>
+                  <td>{fmtDate(job.closed_at)}</td>
+                  <td>{fmtDate(job.serviceDate || job.delivery_date)}</td>
+                  <td className="col-workers">
+                    {workers.length
+                      ? workers.map((name, wi) => (
+                          <div key={`${jobId}-w-${wi}`}>{name}</div>
+                        ))
+                      : "—"}
+                  </td>
+                  <td>{profitText}</td>
                 </tr>
               );
             })}
@@ -211,10 +181,7 @@ export default function Dashboard() {
       {showWorkerModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <ModalAddWorker
-              onClose={() => setShowWorkerModal(false)}
-              onAddWorker={handleAddWorker}
-            />
+            <ModalAddWorker onClose={() => setShowWorkerModal(false)} onAddWorker={handleAddWorker} />
           </div>
         </div>
       )}

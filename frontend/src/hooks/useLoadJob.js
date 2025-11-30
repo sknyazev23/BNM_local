@@ -65,23 +65,16 @@ export default function useLoadJob(routeId, setters) {
           mp.rate_aed_to_eur != null ? String(mp.rate_aed_to_eur) : ""
         );
 
-        const rawDD = job.delivery_date;                         // может быть "2025-09-10T..." или { $date: "..." }
-        const iso = typeof rawDD === "string" ? rawDD : rawDD?.$date;
-        const ymd = iso ? String(iso).slice(0, 10) : "";         // "YYYY-MM-DD"
-        setters.setServiceDone?.(isoToDDMMYYYY(ymd));            // -> "DD-MM-YYYY"
-
+        setters.setServiceDone?.(job.serviceDone ? isoToDDMMYYYY(job.serviceDone) : (job.delivery_date ? isoToDDMMYYYY(job.delivery_date) :""));
         setters.setArchived?.(Boolean(job.archived));   
 
         // --- маппинг Expenses
         const mapExpense = (e = {}) => {
-          // предпочитаем явные поля, иначе откатываемся к словарю cost
           const qty = e.quantity != null ? Number(e.quantity) : 1;
           const unit = e.unit_cost != null ? Number(e.unit_cost) : undefined;
-
           const dict = e.cost || {};
           const curFromCost = ("USD" in dict && "USD") || Object.keys(dict)[0];
           const amountFromCost = dict[curFromCost || ""] != null ? Number(dict[curFromCost]) : undefined;
-
           const currency = (e.currency || curFromCost || "USD").toUpperCase();
           const unit_cost = unit != null ? unit : (amountFromCost != null ? amountFromCost : 0);
 
@@ -100,14 +93,10 @@ export default function useLoadJob(routeId, setters) {
         const mapSale = (s = {}) => {
           const qty = s.qty != null ? Number(s.qty) : undefined;
           const up  = s.unit_price != null ? Number(s.unit_price) : undefined;
-
           const dict = s.amount || {};
           const curFromAmount = ("USD" in dict && "USD") || Object.keys(dict)[0];
           const amountFromDict = dict[curFromAmount || ""] != null ? Number(dict[curFromAmount]) : undefined;
-
           const currency = (s.currency || curFromAmount || "USD").toUpperCase();
-
-          // если нет unit_price/qty — положим всё в unit_price, qty=1 (как раньше), иначе оставим как есть
           const unit_price = up != null ? up : (amountFromDict != null ? amountFromDict : 0);
           const qtyFinal   = qty != null ? qty : 1;
 
@@ -132,7 +121,7 @@ export default function useLoadJob(routeId, setters) {
     })();
 
     return () => { alive = false; };
-  }, [routeId]); // setters можно опустить из deps, если они стабильны
+  }, [routeId]);
 
   return { loaded };
 }

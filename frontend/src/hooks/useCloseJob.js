@@ -2,7 +2,7 @@
 import { useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-// стабильная сериализация: сортируем ключи объектов
+// сортируем ключи объектов
 function stableStringify(value) {
   const seen = new WeakSet();
   return JSON.stringify(value, function (k, v) {
@@ -25,27 +25,34 @@ export default function useCloseJob(buildFn, saveJob, jobId) {
 
   const setSnapshot = useCallback(() => {
     if (typeof buildFn !== "function") return;
-    snapRef.current = buildFn();
+    snapRef.current = stableStringify(buildFn());
   }, [buildFn]);
 
   const isDirty = useCallback(() => {
     if (typeof buildFn !== "function") return false;
-    if (!snapRef.current) return false;
+    if (snapRef.current == null) return false;
     try {
-      return stableStringify(buildFn()) !== stableStringify(snapRef.current);
+      return stableStringify(buildFn()) !== snapRef.current;
     } catch {
       return false;
     }
   }, [buildFn]);
 
   const exitToDashboard = useCallback(async () => {
+
+    console.log("[exitToDashboard] clicked, jobId =", jobId);
+    const dirty = isDirty();
+    console.log("[exitToDashboard] isDirty =", dirty);
+
+
+
     if (isDirty()) {
       const ok = confirm("Save changes before leaving?");
       if (ok) {
-        await saveJob(); // ошибки покажет сам saveJob
+        await saveJob();
       }
     }
-    navigate("/dashboard"); // путь к вашему Dashboard
+    navigate("/dashboard");
   }, [isDirty, saveJob, navigate]);
 
   return { exitToDashboard, setSnapshot, isDirty };

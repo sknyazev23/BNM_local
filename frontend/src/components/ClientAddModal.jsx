@@ -17,15 +17,16 @@ export default function ClientAddModal({ onClose, onAddClient }) {
     }
 
     const newClient = {
-      name,
-      vat: vat || null,
-      contact_person: contactPerson,
-      phone: phone || null,
-      email: email || null,
+      name: name.trim(),
+      vat_number: vat.trim() || null,
+      contact_person: contactPerson.trim(),
+      phone: phone.trim() || null,
+      mail: email.trim() || null,
       country: country || null,
       note: note || null,
     };
 
+    console.log("Send to server: ", newClient);
     onAddClient(newClient);
     onClose();
   };
@@ -67,7 +68,7 @@ export default function ClientAddModal({ onClose, onAddClient }) {
             value={country}
             onChange={(e) => setCountry(e.target.value)}
           />
-          <input
+          <textarea
             placeholder="note"
             value={note}
             onChange={(e) => setNote(e.target.value)}

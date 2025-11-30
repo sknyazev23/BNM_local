@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, Form, HTTPException
-from config import docs_collection
+from config import documents_collection
 from pathlib import Path
 import aiofiles
 from bson import ObjectId
@@ -44,13 +44,13 @@ async def upload_document(
         "path": str(file_path)
     }
 
-    docs_collection.insert_one(doc)
+    documents_collection.insert_one(doc)
     return {"message": "File uploaded", "path": str(file_path)}
 
 
-@router.delete("/docs/{doc_id}")
+@router.delete("/documents/{doc_id}")
 async def delete_document(doc_id: str):
-    doc = docs_collection.find_one({"_id": ObjectId(doc_id)})
+    doc = documents_collection.find_one({"_id": ObjectId(doc_id)})
     if  not doc:
         raise HTTPException(404, "Document is not found")
     
@@ -58,13 +58,13 @@ async def delete_document(doc_id: str):
     if file_path.exists():
         file_path.unlink()
 
-    docs_collection.delete_one({"_id": ObjectId(doc_id)})
+    documents_collection.delete_one({"_id": ObjectId(doc_id)})
     return {"message": "Document deleted"}
 
 
-@router.get("/docs/{job_id}")
+@router.get("/documents/{job_id}")
 async def list_documents(job_id: str):
-    docs = list(docs_collection.find(
+    docs = list(documents_collection.find(
         {"job_id": job_id},
         {"_id": 1, "name": 1, "upload_date": 1})
         )

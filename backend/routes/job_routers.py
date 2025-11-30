@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Body
 from pymongo.errors import DuplicateKeyError
 from models.job_model import Job, ExpensesItem, SaleItem
-from config import jobs_collection, sales_collection, expenses_collection, docs_collection, workers_collection
+from config import jobs_collection, sales_collection, expenses_collection, documents_collection, workers_collection
 from bson import ObjectId
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date as _date
 
 router = APIRouter()
 
@@ -92,8 +92,8 @@ def get_all_jobs():
             "client_name": mp.get("client_name"),
             "status": "Archived" if is_arch else "Open",
             "created_at": mp.get("created_at"),
-            "closed_at": job.get("closed_at"),
-            "delivery_date": job.get("delivery_date"),
+            "closed_at": mp.get("closed_at"),
+            "serviceDone": job.get("delivery_date"),
             "workers": job.get("workers", []),
             "profit_usd": job.get("profit_usd", 0), 
         })
@@ -105,11 +105,14 @@ def get_all_jobs():
 def create_job(job: Job):
     data = job.model_dump(exclude_none=True)
 
-    sd = data.get("service_done")
-    if sd is True and not data.get("delivery_date"):
-        data["delivery_date"] = datetime.now(timezone.utc)
-    elif sd is False:
-        data["delivery_date"] = None
+    dd = data.get("delivery_date")
+    if isinstance(dd, _date) and not isinstance(dd, datetime):
+        data["delivery_date"] = datetime(dd.year, dd.month, dd.day, tzinfo=timezone.utc)
+    elif isinstance(dd, str) and dd:
+        try:
+            data["delivery_date"] = datetime.fromisoformat(dd.replace("Z", "+00:00"))
+        except ValueError:
+            data["delivery_date"] = None
 
     sales = data.pop("sale_part", [])
     expenses = data.pop("expenses_part", [])
@@ -155,6 +158,9 @@ def get_job(id: str):
 
     job["expenses_part"] = expenses
     job["sale_part"] = sales
+
+    if job.get("delivery_date") is not None:
+        job["serviceDone"] = job["delivery_date"]
 
     return _normalize(job)
 
@@ -225,7 +231,7 @@ def delete_job(id: str):
     #  удаляем связанные документы
     exp_res = expenses_collection.delete_many({"job_id": id})
     sal_res = sales_collection.delete_many({"job_id": id})
-    doc_res = docs_collection.delete_many({"job_id": id})
+    doc_res = documents_collection.delete_many({"job_id": id})
 
     job_res = jobs_collection.delete_one({"_id": ObjectId(id)})
 
@@ -251,12 +257,21 @@ def list_job_documents(job_id: str):
         {"$project": {"id": "$_id.name", "name": "$_id.name", "count": 1, "_id": 0}},
         {"$sort": {"name": 1}}
     ]
-    return list(docs_collection.aggregate(pipeline))
+    return list(documents_collection.aggregate(pipeline))
 
 
 @router.put("/{id}")
 def update_job(id: str, job: Job):
     data = job.model_dump(exclude_none=True)
+    
+    dd = data.get("delivery_date")
+    if isinstance(dd, _date) and not isinstance(dd, datetime):
+        data["delivery_date"] = datetime(dd.year, dd.month, dd.day, tzinfo=timezone.utc)
+    elif isinstance(dd, str) and dd:
+        try:
+            data["delivery_date"] = datetime.fromisoformat(dd.replace("Z", "+00:00"))
+        except ValueError:
+            data["delivery_date"] = None
 
     current = jobs_collection.find_one({"_id": ObjectId(id)}, {"archived": 1})
     if not current:
@@ -269,13 +284,13 @@ def update_job(id: str, job: Job):
     # Если архив — разрешаем менять ТОЛЬКО флаги,
     if is_archived:
         allowed = {}
-        if "service_not_delivered" in data:
-            allowed["service_not_delivered"] = bool(data["service_not_delivered"])
+        if "delivery_date" in data:
+            allowed["delivery_date"] = data["delivery_date"]
         if "archived" in data:
             allowed["archived"] = bool(data["archived"])
 
         forbidden_payload = (sales or expenses or
-                             any(k not in ("service_not_delivered", "archived") for k in data.keys()))
+                             any(k not in ("delivery_date", "archived") for k in data.keys()))
         if forbidden_payload and not allowed:
             raise HTTPException(status_code=403, detail="Job is archived. Editing is disabled")
         if allowed:
@@ -320,6 +335,8 @@ def update_job(id: str, job: Job):
         {"_id": ObjectId(id)},
         {"$set": {"sale_ids": sale_ids, "expense_ids": expense_ids}}
     )
+
+    _recalc_job_summary(id)
 
     return {
         "message": "Job updated",

@@ -68,7 +68,7 @@ export function buildJobApiData(raw, { serviceDone, archived }) {
     };
   });
 
-  const delivery_date = serviceDone ? ddmmyyyyToISO(serviceDone) : null;
+  const delivery_date = serviceDone ? `${ddmmyyyyToISO(serviceDone)}T00:00:00Z` : null;
 
   return {
     status: "open",

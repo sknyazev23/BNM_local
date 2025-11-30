@@ -98,14 +98,14 @@ class ProfitItem(BaseModel):
 class Job(BaseModel):
     status: str = "open"
     main_part: MainPart
-    service_not_delivered: bool = False
+
     archived: bool = False
-    service_done: Optional[bool] = None
-    archived: Optional[bool] = None
-    delivery_date: Optional[datetime] = None
+    delivery_date: Optional[date] = Field(default=None, alias="serviceDone")
+    
     expenses_part: Optional[List[ExpensesItem]] = []
     sale_part: Optional[List[SaleItem]] = []
     profit_part: Optional[List[ProfitItem]] = []
 
     profit_usd: Optional[float] = None
     workers: Optional[List[str]] = None
+    model_config = ConfigDict(populate_by_name=True)

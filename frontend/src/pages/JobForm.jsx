@@ -65,7 +65,7 @@ export default function JobForm() {
     return m;
   }, [workers]);
  
-  const [serviceDone, setServiceDone] = useState(); //DD-MM-YYYY
+  const [serviceDone, setServiceDone] = useState("");
   const [archived, setArchived] = useState(false); 
   const isReadOnly = !!archived
 
@@ -107,20 +107,26 @@ export default function JobForm() {
     bnNumber, referBN, client, carrier, shipper, consignee,
     commodity, quantity, weight, portLoading, portDischarge,
     paymentTerms, paymentLocation, payerCompany,
-    rateAEDUSD, rateRUBUSD, rateAEDEUR, expenses, sales, serviceDone,
+    rateAEDUSD, rateRUBUSD, rateAEDEUR, expenses, sales,
+    serviceDone, archived,
   });
 
   const build = buildRaw;
 
   // 2) Сохранение
   const saveJob = async () => {
+    const wasNew = !jobMongoId;
+    const hadChanges = wasNew ? true : (isDirty?.() ?? true);
+
     if (!client || (typeof client === "object" && !client.name)) {
       alert("Select client before saving");
       return;
     }
 
-    const wasNew = !jobMongoId;
     const jobData = buildJobApiData(buildRaw(), { serviceDone, archived });
+    console.log("[saveJob] payload ->", jobData);
+    console.log("[saveJob] called. serviceDone =", serviceDone);
+    console.log("[saveJob] delivery_date =", jobData.delivery_date);  //
 
     try {
       if (wasNew) {
@@ -132,7 +138,7 @@ export default function JobForm() {
 
       setSnapshot();
 
-      alert("Congrats! Job saved.");
+      if (hadChanges) alert("Congrats! Job saved.");
 
       if (wasNew) {
         await exitToDashboard();
@@ -144,7 +150,7 @@ export default function JobForm() {
     }
   };
 
-  const { exitToDashboard, setSnapshot } = useCloseJob(build, saveJob, jobMongoId);
+  const { exitToDashboard, setSnapshot, isDirty } = useCloseJob(build, saveJob, jobMongoId);
 
   useEffect(() => {
     API.get("/workers").then((res) => setWorkers(res.data));
@@ -199,7 +205,9 @@ export default function JobForm() {
     <div className="job-form-wrapper">
       <h2 className="end-summary">
         <span className="title">
-          {routeId && routeId !== "new" ? `Job  # ${bnNumber || "-"}` : "Create NEW Job"}
+          {jobMongoId && bnNumber
+            ? `Job # {bnNumber}` : "Create NEW Job"
+          }
         </span>
       </h2>
 
@@ -550,7 +558,10 @@ export default function JobForm() {
           {/* existed BN */}
           {/* buttons _left */}
           <div className="actions-left">
-            <button type="button" onClick={exitToDashboard} className="bn-btn bn-btn--muted">
+            <button type="button" onClick={async () => { console.log("[UI] Close clicked (existing)");
+            if (isDirty?.()) { await saveJob() };
+            await exitToDashboard();
+            }} className="bn-btn bn-btn--muted">
               Close & return to Dashboard
             </button>
 
@@ -584,7 +595,7 @@ export default function JobForm() {
             <label className="s-date">
               <span>Service done</span>
               <input type="date"
-              value={ddmmyyyyToISO(serviceDone)}
+              value={serviceDone ? ddmmyyyyToISO(serviceDone) : ""}
               onChange={(e) => setServiceDone(isoToDDMMYYYY(e.target.value))}
               disabled={isReadOnly}
               />

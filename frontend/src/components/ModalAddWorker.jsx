@@ -15,7 +15,6 @@ export default function ModalAddWorker({ onClose, onAddWorker }) {
             return;
         }
         const newWorker = {
-            id: `W${Date.now()}`, // автоматическая генерация ID
             name,
             field: field || null,
             role: role || null,
