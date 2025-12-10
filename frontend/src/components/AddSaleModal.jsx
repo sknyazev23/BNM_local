@@ -6,7 +6,16 @@ import { onlyPositiveDecimal4, blockPaste, decimal4Change, decimal4Blur } from "
 import PlanFactToggle from "./PlanFactToggle";
 import "../styles/modal.css";
 
-export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, jobId }) {
+export default function AddSaleModal({
+  isOpen,
+  onClose,
+  onSave,
+  existingData = {},
+  displayNo,
+  rates,
+  jobId
+
+  }) {
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
@@ -33,8 +42,18 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
   useEffect(() => {
     if (isOpen) {
       API.get("/workers/")
-        .then(res => setWorkersList(res.data))
-        .catch(err => console.error("Error loading workers", err));
+        .then(res => {
+          const normalized = res.data.map(w => ({
+            ...w,
+            id: w.id || String(w._id || w.id)
+          }));
+          setWorkersList(normalized);
+        })
+        .catch(err => {console.error("Error loading workers", err);
+        setWorkersList([]);
+      });
+    } else {
+    setWorkersList([]);
     }
   }, [isOpen]);
 
@@ -60,47 +79,52 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
       alert("Sale description is required!");
       return null;
     }
+  
     const qty = parseInt(formData.qty || 0, 10);
     const unit_price_origin = parseFloat(formData.unit_price || 0);
     const currency_origin = formData.currency || "USD";
-    const amount_origin = qty * unit_price_origin || 0;
+    const amount_origin = qty * unit_price_origin;
     const amount_aed = toAED(amount_origin, currency_origin, rates);
+    const mainWorker = workersList.find(w => w.id === formData.worker);
+    const coworker = workersList.find(w => w.id === formData.collaboration);
 
-    const worker_ids = [
-      formData.worker || null,
-      formData.collaboration || null
-    ].filter(Boolean);
-
-    const mainWorker = workersList.find(w => (w._id || w.id) == formData.worker);
-    const worker_name = mainWorker?.name || null; 
 
     return {
       job_id: jobId,
       description: formData.description.trim(),
       qty,
       unit_price_origin,
-      currency_origin,
+      currency_origin: formData.currency || "USD",
       amount_origin,
       amount_aed,
-      worker_ids,
-      worker_name,
-      status: formData.status || "plan",
+      worker_id: formData.worker || null,
+      worker_name: mainWorker?.name || null,
+      coworker_name: coworker?.name || null,
       date_client_payment: formData.date_client_payment || null,
       client_payment_note: formData.client_payment_note?.trim() || null,
       rate_of_payment: parseFloat(formData.rate_of_payment || 0) || null,
+      sale_status: formData.status || "plan",
       edit_date: new Date().toISOString(),
     };
   };
 
   // save
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
+
     const payload = formSale();
     if (!payload) return;
 
-    console.log("Real payload -> MongoDB: ", payload);
-    onSave(payload);
-    setIsEdited(false);
+    console.log("Отправляем продажу в MongoDB:", payload);
+
+    try {
+      await API.post("/sales", payload);
+      onSave(payload);
+      onClose();
+    } catch (err) {
+      console.error("Ошибка сохранения продажи:", err.response?.data || err.message);
+      alert("Ошибка сохранения продажи. Открой консоль (F12) → вкладка Console");
+    }
   };
 
 
@@ -190,20 +214,20 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
 
             <div>Amount in AED: {amountAEDStr}</div>
 
-            {/* Choose worker (один ответственный) */}
+            {/* Choose worker (main) */}
             <select
               value={formData.worker || ""}
               onChange={(e) => handleChange("worker", e.target.value)}
             >
               <option value="">Choose worker</option>
               {workersList.map(w => (
-                <option key={w.id || w._id} value={w.id || w._id}>
-                  {w.name}
+                <option key={w.id} value={w.id}>
+                  {w.name} {w.role ? `(${w.field})` : ""}
                 </option>
               ))}
             </select>
 
-            {/* Доп. поля: в DB, не на Job form, не обязательны */}
+            {/* в DB, не на Job form */}
 
             {/* Date of client payment */}
             <input
@@ -242,7 +266,7 @@ export default function AddSaleModal({ isOpen, onClose, onSave, existingData = {
             >
               <option value="">Choose coworker</option>
               {workersList.map(w => (
-                <option key={w.id || w._id} value={w.id || w._id}>
+                <option key={w.id} value={w.id}>
                   {w.name}
                 </option>
               ))}

@@ -104,6 +104,7 @@ export default function JobForm() {
   );
 
   const buildRaw = () => ({
+    _id: jobMongoId,
     bnNumber, referBN, client, carrier, shipper, consignee,
     commodity, quantity, weight, portLoading, portDischarge,
     paymentTerms, paymentLocation, payerCompany,
@@ -115,7 +116,7 @@ export default function JobForm() {
 
   // 2) Сохранение
   const saveJob = async () => {
-    const wasNew = !jobMongoId;
+    const wasNew = !loaded;
     const hadChanges = wasNew ? true : (isDirty?.() ?? true);
 
     if (!client || (typeof client === "object" && !client.name)) {
@@ -124,6 +125,9 @@ export default function JobForm() {
     }
 
     const jobData = buildJobApiData(buildRaw(), { serviceDone, archived });
+    if (wasNew) {
+      jobData._id = jobMongoId;
+    }
     console.log("[saveJob] payload ->", jobData);
     console.log("[saveJob] called. serviceDone =", serviceDone);
     console.log("[saveJob] delivery_date =", jobData.delivery_date);  //
@@ -156,8 +160,11 @@ export default function JobForm() {
     API.get("/workers").then((res) => setWorkers(res.data));
   }, []);
 
+  // create job_id
   useEffect(() => {
-    if (routeId && routeId !== "new") setJobMongoId(routeId);
+    if (routeId) {
+      setJobMongoId(routeId);
+    }
   }, [routeId]);
 
   useEffect(() => {
@@ -204,6 +211,10 @@ export default function JobForm() {
   return (
     <div className="job-form-wrapper">
       <h2 className="end-summary">
+
+        {/* temp */}
+        job_id: <span style={{color: "red", fontWeight: "bold"}}> {jobMongoId || "not yet"}</span>
+        
         <span className="title">
           {jobMongoId && bnNumber
             ? `Job # {bnNumber}` : "Create NEW Job"
@@ -542,7 +553,7 @@ export default function JobForm() {
 
       {/* Buttons */}
       <div className="job-actions">
-        {!jobMongoId ? (
+        {!loaded ? (
           // NEW BN
           <div className="actions-left">
             <button onClick={saveJob} className="bn-btn bn-btn--accent">
@@ -647,6 +658,8 @@ export default function JobForm() {
             }
             setShowSaleModal(false);
           }}
+          jobId={jobMongoId}
+          allowLocalOnly={!jobMongoId}
           workers={workers}
           existingData={currentSale !== null ? sales[currentSale] : {}}
           displayNo={currentSale !== null ? currentSale + 1 : sales.length + 1}

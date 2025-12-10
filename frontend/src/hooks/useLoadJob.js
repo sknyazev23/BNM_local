@@ -10,9 +10,11 @@ export default function useLoadJob(routeId, setters) {
     let alive = true;
     setLoaded(false);
 
-    if (!routeId || routeId === "new") {
-      if (alive) setLoaded(true);
-      return () => { alive = false; };
+    const isNewJob = routeId && /^BN\d{8}-\d{6}$/.test(routeId);
+
+    if (!routeId || routeId === "new" || isNewJob) {
+      if (alive) setLoaded(false);
+      return;
     }
 
     (async () => {
@@ -112,11 +114,15 @@ export default function useLoadJob(routeId, setters) {
 
         setters.setExpenses?.((job.expenses_part || []).map(mapExpense));
         setters.setSales?.((job.sale_part || []).map(mapSale));
+        if(alive) setLoaded(true);
+
       } catch (err) {
         console.error("Failed to load job", err);
-        alert("Не удалось загрузить Job");
-      } finally {
-        if (alive) setLoaded(true);
+        if (err.response?.status !== 404) {
+          alert("Error loading job: " + (err.message || "unknown"));
+        }
+
+        if (alive) setLoaded(false);
       }
     })();
 

@@ -6,7 +6,7 @@ from bson import ObjectId
 router = APIRouter(tags=["Workers"])
 
 @router.options("/")
-async def options():
+def options():
     return {
         "allow": "GET, POST, PATCH, DELETE, OPTIONS",
         "headers": "*"

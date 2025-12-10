@@ -10,9 +10,10 @@ router = APIRouter(tags=["Clients"])
 
 @router.get("/")
 def get_clients():
-    items = list(clients_collection.find())
-    for it in items:
-        it["_id"] = str(it["_id"])
+    items = []
+    for doc in clients_collection.find():
+        doc["_id"] = str(doc["_id"])
+        items.append(doc)
     return items
 
 @router.post("/", status_code=201)
@@ -53,7 +54,6 @@ def _serialize(doc: dict) -> dict:
 
 # ── GET one (на будущее/удобство фронта)
 @router.get("/{client_id}")
-@router.get("/{client_id}/")   # принимаем и со слэшем, и без
 def get_client(client_id: str):
     oid = _ensure_oid(client_id)
     doc = clients_collection.find_one({"_id": oid})
@@ -63,7 +63,6 @@ def get_client(client_id: str):
 
 # ── PUT: полная замена (используем твою модель ClientIn)
 @router.put("/{client_id}")
-@router.put("/{client_id}/")
 def update_client_put(client_id: str, payload: ClientIn):
     oid = _ensure_oid(client_id)
     update = {"$set": payload.model_dump()}
@@ -75,7 +74,6 @@ def update_client_put(client_id: str, payload: ClientIn):
 
 # ── PATCH: частичное обновление
 @router.patch("/{client_id}")
-@router.patch("/{client_id}/")
 def update_client_patch(client_id: str, payload: ClientUpdate):
     oid = _ensure_oid(client_id)
     data = {k: v for k, v in payload.model_dump().items() if v is not None}
@@ -89,7 +87,6 @@ def update_client_patch(client_id: str, payload: ClientUpdate):
 
 # ── DELETE
 @router.delete("/{client_id}")
-@router.delete("/{client_id}/")
 def delete_client(client_id: str):
     oid = _ensure_oid(client_id)
     res = clients_collection.delete_one({"_id": oid})

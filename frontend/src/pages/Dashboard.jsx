@@ -83,9 +83,24 @@ export default function Dashboard() {
       <div className={`job-list ${selectedJob ? "narrow" : ""}`}>
         <div className="job-controls">
           <div className="job-buttons">
-            <button type="button" className="create" onClick={() => navigate("/job/new")}>
+
+            <button type="button" className="create"
+            onClick={() => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, "0");
+              const day = String(now.getDate()).padStart(2, "0");
+              const hours = String(now.getHours()).padStart(2, "0");
+              const minutes = String(now.getMinutes()).padStart(2, "0");
+              const seconds = String(now.getSeconds()).padStart(2, "0");
+
+              const autoJobId = `BN${year}${month}${day}-${hours}${minutes}${seconds}`;
+              navigate(`/job/${autoJobId}`);
+            }}
+            >
               <Plus size={16} /> Create
             </button>
+
             <button className="edit">
               <Pencil size={16} /> Edit
             </button>
