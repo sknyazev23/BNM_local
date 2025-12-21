@@ -26,3 +26,11 @@ def create_expense(expense: ExpenseItem):
         "expense_id": str(result.inserted_id),
         "job_id": expense.job_id
     }
+
+
+@router.get("")
+def get_expenses():
+    expenses = list(expenses_collection.find())
+    for exp in expenses:
+        exp["_id"] = str(exp["_id"])
+    return expenses
