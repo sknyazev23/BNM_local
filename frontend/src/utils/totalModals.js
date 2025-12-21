@@ -8,9 +8,9 @@ export function calcTotals(rows, fx, {
   let sumAED = 0;
 
   for (const r of rows) {
-    const qty  = Number(r?.[qtyKey] ?? 0);
+    const quantity  = Number(r?.[qtyKey] ?? 0);
     const unit = Number(r?.[unitKey] ?? 0);
-    const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
+    const amount = Number.isFinite(quantity * unit) ? quantity * unit : 0;
     const aed = toAED(amount, r?.[currencyKey] || "USD", fx);
     if (Number.isFinite(aed)) sumAED += aed;
   }

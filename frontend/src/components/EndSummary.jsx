@@ -16,7 +16,7 @@ export default function EndSummary({
     [expenses, fxRates]
   );
   const saleTotals = useMemo(
-    () => calcTotals(sales, fxRates, { qtyKey: "qty", unitKey: "unit_price", currencyKey: "currency" }),
+    () => calcTotals(sales, fxRates, { qtyKey: "quantity", unitKey: "unit_price", currencyKey: "currency" }),
     [sales, fxRates]
   );
 
@@ -42,9 +42,9 @@ export default function EndSummary({
     const costAEDForSale = (saleIndex) =>
       expenses.reduce((sum, e) => {
         if ((e?.binded_sale ?? null) !== saleIndex) return sum;
-        const qty = Number(e?.quantity ?? 0);
+        const quantity = Number(e?.quantity ?? 0);
         const unit = Number(e?.unit_cost ?? 0);
-        const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
+        const amount = Number.isFinite(quantity * unit) ? quantity * unit : 0;
         const cur = e?.currency || "USD";
         return sum + toAED(amount, cur, fxRates);
       }, 0);
@@ -54,9 +54,9 @@ export default function EndSummary({
       if (coll == null || coll === "") return;
       if (!Array.isArray(coll)) coll = [coll];
 
-      const qty  = Number(s?.qty ?? 0);
+      const quantity  = Number(s?.quantity ?? 0);
       const unit = Number(s?.unit_price ?? 0);
-      const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
+      const amount = Number.isFinite(quantity * unit) ? quantity * unit : 0;
       const cur = s?.currency || "USD";
       const saleAED  = toAED(amount, cur, fxRates);
       const costsAED = costAEDForSale(idx);

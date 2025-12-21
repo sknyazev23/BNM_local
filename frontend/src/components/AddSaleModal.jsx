@@ -22,15 +22,15 @@ export default function AddSaleModal({
 
   // автопересчёт Amount
   const amount = useMemo(() => {
-    const q = parseFloat(formData.qty) || 0;
+    const q = parseFloat(formData.quantity) || 0;
     const u = parseFloat(formData.unit_price) || 0;
     const res = q * u;
     return Number.isFinite(res) ? res : 0;
-  }, [formData.qty, formData.unit_price]);
+  }, [formData.quantity, formData.unit_price]);
 
 
   // показываем числа ТОЛЬКО когда оба поля > 0
-  const showAmounts = Number(formData.qty) > 0 && Number(formData.unit_price) > 0;
+  const showAmounts = Number(formData.quantity) > 0 && Number(formData.unit_price) > 0;
   const amountStr = showAmounts ? format4(amount) : "";
   const amountAED = useMemo(() => (
     showAmounts ? toAED(amount, formData.currency || "USD", rates) : 0
@@ -80,10 +80,10 @@ export default function AddSaleModal({
       return null;
     }
   
-    const qty = parseInt(formData.qty || 0, 10);
+    const quantity = parseInt(formData.quantity || 0, 10);
     const unit_price_origin = parseFloat(formData.unit_price || 0);
     const currency_origin = formData.currency || "USD";
-    const amount_origin = qty * unit_price_origin;
+    const amount_origin = quantity * unit_price_origin;
     const amount_aed = toAED(amount_origin, currency_origin, rates);
     const mainWorker = workersList.find(w => w.id === formData.worker);
     const coworker = workersList.find(w => w.id === formData.collaboration);
@@ -92,7 +92,7 @@ export default function AddSaleModal({
     return {
       job_id: jobId,
       description: formData.description.trim(),
-      qty,
+      quantity,
       unit_price_origin,
       currency_origin: formData.currency || "USD",
       amount_origin,
@@ -164,24 +164,24 @@ export default function AddSaleModal({
               type="number"
               min="0"
               step="1"
-              value={formData.qty != null ? formData.qty : ""}
+              value={formData.quantity != null ? formData.quantity : ""}
               onKeyDown={(e) => {
                 if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
               }}
               onChange={(e) => {
                 const v = e.target.value;
                 if (v === "") {
-                  handleChange("qty", "");
+                  handleChange("quantity", "");
                   return;
                 }
                 const n = parseInt(v, 10);
-                handleChange("qty", Number.isFinite(n) ? Math.max(0, n) : 0);
+                handleChange("quantity", Number.isFinite(n) ? Math.max(0, n) : 0);
               }}
               onBlur={(e) => {
                 const n = parseInt(e.target.value, 10);
                 const cleaned = Number.isFinite(n) ? Math.max(0, n) : "";
                 e.target.value = String(cleaned);     // выравниваем видимое значение
-                handleChange("qty", cleaned);
+                handleChange("quantity", cleaned);
               }}
             
             />

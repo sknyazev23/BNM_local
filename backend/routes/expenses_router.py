@@ -1,18 +1,24 @@
 from fastapi import APIRouter, HTTPException
 from models.expense_model import ExpenseItem
-from config import expenses_collection, jobs_collection
+from bson import ObjectId
+from config import expenses_collection, sales_collection
 
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
-@router.post("/")
+@router.post("")
 def create_expense(expense: ExpenseItem):
-    if not expense.job_id:
-        raise HTTPException(400, detail="job_id required")
- 
+
+    sale = sales_collection.find_one({
+        "_id": ObjectId(expense.sale_id),
+        "job_id": expense.job_id
+    })
+    if not sale:
+        raise HTTPException(400, detail="Sale does not belong to the job")
     
     expenses_dict = expense.model_dump()
-    expenses_dict["job_id"] = expense.job_id        
+
+    expenses_dict["binded_sale"] = sale.get("description", "").strip()        
     result = expenses_collection.insert_one(expenses_dict)
 
     return {

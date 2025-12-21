@@ -5,7 +5,7 @@ from typing import Optional
 class SaleItem(BaseModel):
     job_id: str
     description: str
-    qty: int = 0
+    quantity: int = 0
     unit_price_origin: float = 0.0
     currency_origin: str = "USD"
     amount_origin: float = 0.0

@@ -72,7 +72,7 @@ export default function useLoadJob(routeId, setters) {
 
         // --- маппинг Expenses
         const mapExpense = (e = {}) => {
-          const qty = e.quantity != null ? Number(e.quantity) : 1;
+          const quantity = e.quantity != null ? Number(e.quantity) : 1;
           const unit = e.unit_cost != null ? Number(e.unit_cost) : undefined;
           const dict = e.cost || {};
           const curFromCost = ("USD" in dict && "USD") || Object.keys(dict)[0];
@@ -82,7 +82,7 @@ export default function useLoadJob(routeId, setters) {
 
           return {
             description: e.description || "",
-            quantity: Number.isFinite(qty) ? qty : 0,
+            quantity: Number.isFinite(quantity) ? quantity : 0,
             unit_cost: Number.isFinite(unit_cost) ? unit_cost : 0,
             currency,
             seller: e.seller || "",
@@ -93,18 +93,18 @@ export default function useLoadJob(routeId, setters) {
 
         // --- маппинг Sales
         const mapSale = (s = {}) => {
-          const qty = s.qty != null ? Number(s.qty) : undefined;
+          const quantity = s.quantity != null ? Number(s.quantity) : undefined;
           const up  = s.unit_price != null ? Number(s.unit_price) : undefined;
           const dict = s.amount || {};
           const curFromAmount = ("USD" in dict && "USD") || Object.keys(dict)[0];
           const amountFromDict = dict[curFromAmount || ""] != null ? Number(dict[curFromAmount]) : undefined;
           const currency = (s.currency || curFromAmount || "USD").toUpperCase();
           const unit_price = up != null ? up : (amountFromDict != null ? amountFromDict : 0);
-          const qtyFinal   = qty != null ? qty : 1;
+          const qtyFinal   = quantity != null ? quantity : 1;
 
           return {
             description: s.description || "",
-            qty: Number.isFinite(qtyFinal) ? qtyFinal : 0,
+            quantity: Number.isFinite(qtyFinal) ? qtyFinal : 0,
             unit_price: Number.isFinite(unit_price) ? unit_price : 0,
             currency,
             worker: (Array.isArray(s.workers) && s.workers[0]) || s.worker || "",
@@ -113,7 +113,7 @@ export default function useLoadJob(routeId, setters) {
         };
 
         setters.setExpenses?.((job.expenses_part || []).map(mapExpense));
-        setters.setSales?.((job.sale_part || []).map(mapSale));
+        setters.setSales?.((job.sales_part || []).map(mapSale));
         if(alive) setLoaded(true);
 
       } catch (err) {

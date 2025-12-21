@@ -6,11 +6,23 @@ import { format4 } from "../utils/numberFormat";
 import { toAED } from "../utils/currency";
 import PlanFactToggle from "./PlanFactToggle";
 
-export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, sales = [] }) {
-  const [formData, setFormData] = useState({});
+export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, job_id }) {
+  const [sales, setSales] = useState([]);
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
   const [isPlan, setIsPlan] = useState(true);
+  const [formData, setFormData] = useState({
+    description: "",
+    sale_id: "",
+    quantity: "",
+    unit_cost: "",
+    currency: "USD",
+    seller: "",
+    worker: "",
+    date_to_seller_payment: "",
+    payment_note: "",
+  });
+
 
   // пересчет для Amount
   const amount = useMemo(() => {
@@ -21,19 +33,57 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   }, [formData.quantity, formData.unit_cost]);
 
   // amount in AED
-  const showAmmounts = Number(formData.quantity) > 0 && Number(formData.unit_cost) > 0;
+  const showAmounts = Number(formData.quantity) > 0 && Number(formData.unit_cost) > 0;
   const amountAED = useMemo(() => (
-    showAmmounts ? toAED(amount, formData.currency || "USD", rates) : 0
-  ), [showAmmounts, amount, formData.currency, rates]);
-
-
-  const showAmount =
-    Number(formData.quantity) > 0 && Number(formData.unit_cost) > 0; 
-
-  const isRequiredText = (v) => typeof v === "string" && v.trim().length > 0;
+    showAmounts ? toAED(amount, formData.currency || "USD", rates) : 0
+  ), [showAmounts, amount, formData.currency, rates]);
 
   const getIsPlan = (ed = {}) => typeof ed.is_plan === "boolean" ? ed.is_plan
-    : typeof ed.status === "string" ? ed.status.toLowerCase() === "plan" : true;
+    : typeof ed.cost_status === "string" ? ed.cost_status.toLowerCase() === "plan" : true;
+
+  // form of Expense
+  const formExpense = () => {
+    if (!formData.description?.trim()) {
+      alert("Cost description is required!");
+      return null;
+    }
+  
+    const quantity = parseInt(formData.quantity || 0, 10);
+    const unit_cost_origin = parseFloat(formData.unit_cost || 0);
+    const currency_origin = formData.currency || "USD";
+    const amount_origin = quantity * unit_cost_origin;
+    const amount_aed = toAED(amount_origin, currency_origin, rates);
+    const mainWorker = workersList.find(w => w.id === formData.worker);
+    if (!job_id) {
+      alert("Job_id is required! ");
+      return null;
+    }
+
+    const sale_id = formData.sale_id;
+
+    if (!sale_id) {
+      alert("Binded sale is required!");
+      return null;
+    }
+
+    return {
+      job_id: job_id,
+      sale_id: sale_id,
+      description: formData.description.trim(),
+      quantity,
+      unit_cost_origin,
+      currency_origin: formData.currency || "USD",
+      amount_origin,
+      amount_aed,
+      seller: formData.seller?.trim() || null,
+      worker_id: formData.worker || null,
+      worker_name: mainWorker?.name || null,
+      date_to_seller_payment: formData.date_to_seller_payment || null,
+      payment_note: formData.payment_note?.trim() || null,
+      cost_status: isPlan ? "plan" : "fact",
+      edit_date: new Date().toISOString(),
+    };
+  };
   
 
   useEffect(() => {
@@ -44,13 +94,42 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     }
   }, [isOpen]);
 
+
+  useEffect(() => {
+    if (!isOpen || !job_id) return;
+
+    API.get(`/sales/by-job?job_id=${job_id}`)
+      .then(res => {
+        setSales(res.data || []);
+      })
+      .catch(err => {
+        console.error("Error loading sales", err);
+        setSales([]);
+      });
+  }, [isOpen, job_id]);
+
+
   // Загружаем данные при открытии
   useEffect(() => {
-    const ed = existingData || {};
-    setFormData({ ...ed, binded_sale: ed.binded_sale ?? ""});
+    if (!job_id) {
+      console.error("AddExpenseModal opened without job_id");
+      return;
+    }
+    setFormData({
+      description: existingData.description ?? "",
+      sale_id: existingData.sale_id ?? "",
+      quantity: existingData.quantity ?? "",
+      unit_cost: existingData.unit_cost_origin ?? "",
+      currency: existingData.currency_origin ?? "USD",
+      seller: existingData.seller ?? "",
+      worker: existingData.worker_id ?? "",
+      date_to_seller_payment: existingData.date_to_seller_payment ?? "",
+      payment_note: existingData.payment_note ?? "",
+    });
+
     setIsEdited(false);
-    setIsPlan(getIsPlan(ed));
-  }, [existingData, isOpen]);
+    setIsPlan(getIsPlan(existingData));
+  }, [existingData, isOpen, job_id]);
 
   // Отслеживание изменений
   const handleChange = (field, value) => {
@@ -59,25 +138,54 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   };
 
   // Сохранение
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (!isRequiredText(formData.description)) {
-      alert("Cost description is required!");
-      return;
+
+    const expenseData = formExpense();
+    if(!expenseData) return;
+
+    const payload = {
+      job_id: expenseData.job_id,
+      sale_id: expenseData.sale_id,
+      cost_description: expenseData.description,
+      quantity: expenseData.quantity,
+      unit_cost_origin: expenseData.unit_cost_origin,
+      currency_origin: expenseData.currency_origin,
+      amount_origin: expenseData.amount_origin,
+      amount_aed: expenseData.amount_aed,
+      seller: expenseData.seller,
+      worker_id: expenseData.worker_id,
+      worker_name: expenseData.worker_name,
+      date_to_seller_payment: expenseData.date_to_seller_payment || null
+        ? new Date(expenseData.date_to_seller_payment)
+        : null,
+      payment_note: expenseData.payment_note,
+      cost_status: expenseData.cost_status,
+      edit_date: new Date(expenseData.edit_date),
+      binded_sale: expenseData.sale_id,
+    };
+
+    console.log("Send expense to Expenses_collection: ", payload);
+
+    try {
+      const res = await API.post("/expenses", payload);
+      if (onSave) onSave(res.data);
+      setIsEdited(false);
+      onClose();
+    } catch (err) {
+      console.error("Save expense error: ", err.response?.data || err.message);
+      alert("Save expense error, check console")
     }
-    onSave({...formData, amount, is_plan: isPlan});
-    setIsEdited(false);
   };
+
 
   // Закрытие с проверкой изменений
   const handleClose = () => {
     if (isEdited) {
       if (confirm("Save changes before closing?")) {
-        if (!isRequiredText(formData.description)) {
-          alert("Cost description is required!");
-          return;
-        }
-        onSave({ ...formData, amount });
+        const expenseData = formExpense();
+        if(!expenseData) return;
+        onSave(expenseData);
       }
     }
     onClose();
@@ -128,7 +236,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
               const n = parseFloat(v);
               handleChange("unit_cost", Number.isFinite(n) ? n : "");
             }} />
-            <div>Amount: {showAmount ? format4(amount) : ""}</div>
+            <div>Amount: {showAmounts ? format4(amount) : ""}</div>
 
             <select value={formData.currency || ""} onChange={(e) => handleChange("currency", e.target.value)}>
               <option value="">Currency</option>
@@ -138,7 +246,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
               <option value="EUR">EUR</option>
             </select>
 
-            <div>Cost amount in AED: {showAmount ? format4(amountAED) : ""}</div>
+            <div>Cost amount in AED: {showAmounts ? format4(amountAED) : ""}</div>
 
 
             <input placeholder="Seller" value={formData.seller || ""} onChange={(e) => handleChange("seller", e.target.value)} />
@@ -152,27 +260,26 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
 
             {/* Binded Sale */}
             <select
-              value={formData.binded_sale ?? ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                handleChange("binded_sale", v === "" ? "" : Number(v));
-              }}
+              value={formData.sale_id ?? ""}
+              onChange={(e) => handleChange("sale_id", e.target.value)}
+            
             >
               <option value="">Binded Sale</option>
-              {sales.map((s, idx) => (
-                <option key={s.id || s._id || idx} value={idx}>
-                  {(s.description && s.description.trim()) ? s.description : `Sale #${idx + 1}`}
-                </option>
-              ))}
+              {sales.map(s => (
+
+                  <option key={s._id} value={s._id}>
+                    {s.description}
+                  </option>
+                ))}
             </select>
 
             <input
-              type={formData.payment_date_to_seller ? "date" : "text"}
+              type={formData.date_to_seller_payment ? "date" : "text"}
               placeholder="Date of our payment to Seller"
-              value={formData.payment_date_to_seller || ""}
+              value={formData.date_to_seller_payment || ""}
               onFocus={(e) => (e.target.type = "date")}
               onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-              onChange={(e) => handleChange("payment_date_to_seller", e.target.value)}
+              onChange={(e) => handleChange("date_to_seller_payment", e.target.value)}
             />
 
             <textarea
@@ -186,7 +293,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
           </div>
 
           <div className="modal-footer">
-            <button onClick={handleSave}>Save</button>
+            <button type="submit" onClick={handleSave}>Save</button>
             <button type="button" onClick={handleClose}>Close</button>
           </div>
         </form>

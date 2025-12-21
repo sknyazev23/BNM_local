@@ -184,7 +184,7 @@ export default function JobForm() {
   );
 
   const saleTotals = useMemo(
-    () => calcTotals(sales, fxRates, { qtyKey: "qty", unitKey: "unit_price" }),
+    () => calcTotals(sales, fxRates, { qtyKey: "quantity", unitKey: "unit_price" }),
     [sales, fxRates]
   );
 
@@ -386,9 +386,9 @@ export default function JobForm() {
 
         <div className="expenses-cards">
           {expenses.map((expense, i) => {
-            const qty = Number(expense.quantity ?? expense.qty ?? 0);
+            const quantity = Number(expense.quantity ?? expense.quantity ?? 0);
             const unit = Number(expense.unit_cost ?? 0);
-            const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
+            const amount = Number.isFinite(quantity * unit) ? quantity * unit : 0;
             const currency = expense.currency || "USD";
             const amountAED = toAED(amount, currency, fxRates);
 
@@ -396,7 +396,7 @@ export default function JobForm() {
               <div className="expense-card-row" key={i}>
                 <span className="ex-cell num">{i + 1}</span>
                 <span className="ex-cell desc">{expense.description || "—"}</span>
-                <span className="ex-cell">{qty}</span>
+                <span className="ex-cell">{quantity}</span>
                 <span className="ex-cell">{format4(unit)}</span>
                 <span className="ex-cell">{format4(amount)}</span>
                 <span className="ex-cell">{currency}</span>
@@ -446,6 +446,7 @@ export default function JobForm() {
 
           <button
             type="button"
+            disabled={!jobMongoId}
             onClick={() => {
               setCurrentExpense(null);
               setShowExpenseModal(true);
@@ -465,9 +466,9 @@ export default function JobForm() {
 
         <div className="expenses-cards">
           {sales.map((sale, i) => {
-            const qty = Number(sale.qty ?? 0);
+            const quantity = Number(sale.quantity ?? 0);
             const unit = Number(sale.unit_price ?? 0);
-            const amount = Number.isFinite(qty * unit) ? qty * unit : 0;
+            const amount = Number.isFinite(quantity * unit) ? quantity * unit : 0;
             const currency = sale.currency || "USD";
             const amountAED = toAED(amount, currency, fxRates);
 
@@ -475,7 +476,7 @@ export default function JobForm() {
               <div className="expense-card-row" key={i}>
                 <span className="ex-cell num">{i + 1}</span>
                 <span className="ex-cell desc">{sale.description || "—"}</span>
-                <span className="ex-cell">{qty}</span>
+                <span className="ex-cell">{quantity}</span>
                 <span className="ex-cell">{format4(unit)}</span>
                 <span className="ex-cell">{format4(amount)}</span>
                 <span className="ex-cell">{currency}</span>
@@ -625,6 +626,8 @@ export default function JobForm() {
       {showExpenseModal && (
         <AddExpenseModal
           isOpen={true}
+          job_id={jobMongoId}
+          sales={sales}
           onClose={() => setShowExpenseModal(false)}
           onSave={(newExpense) => {
             if (currentExpense !== null) {

@@ -9,6 +9,7 @@ from routes.client_routes import router as client_router
 from routes.sales_router import router as sales_router
 from routes.documents_routes import router as doc_router
 from routes.export_jobs import router as export_router
+from routes.expenses_router import router as expenses_router
 
 # Collections
 from config import (
@@ -107,6 +108,7 @@ app.add_middleware(
 app.include_router(job_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(worker_router, prefix="/workers", tags=["Workers"])
 app.include_router(client_router, prefix="/clients", tags=["Clients"])
+app.include_router(expenses_router, tags=["Expenses"])
 app.include_router(sales_router)
 app.include_router(doc_router, prefix="/documents", tags=["Documents"])
 app.include_router(export_router, tags=["Export"])

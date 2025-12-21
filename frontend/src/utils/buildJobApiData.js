@@ -6,6 +6,8 @@ export function buildJobApiData(raw, { serviceDone, archived }) {
     clientObj?.id ?? clientObj?._id ?? (typeof raw.client === "string" ? raw.client : "");
   const client_name =
     clientObj?.name ?? (typeof raw.client === "string" ? raw.client : "");
+  const now = new Date().toISOString();
+
 
   const main_part = {
     bn_number: (raw.bnNumber || "").trim(),
@@ -32,41 +34,75 @@ export function buildJobApiData(raw, { serviceDone, archived }) {
     rate_rub_to_usd: raw.rateRUBUSD !== "" ? Number(raw.rateRUBUSD) : null,
   };
 
+
+
   const expenses_part = (raw.expenses || []).map((e) => {
-    const qty = Number(e.quantity ?? e.qty ?? 0);
+    if (!e.sale_id) {
+      throw new Error("Каждая расходная запись должна быть привязана к sale_id");
+    }
+    
+    const quantity = Number(e.quantity ?? 0);
     const unit = Number(e.unit_cost ?? 0);
     const currency = (e.currency || "USD").toUpperCase();
+
+    const amount_origin = Number.isFinite(quantity * unit)
+      ? Number((quantity * unit).toFixed(4))
+      : 0;
+
     return {
+      job_id: e.job_id || raw.job_id,
+      sale_id: e.sale_id,
+
       description: e.description || "",
-      quantity: Number.isFinite(qty) ? qty : 0,
-      unit_cost: Number.isFinite(unit) ? unit : 0,
-      currency,
-      seller: e.seller || undefined,
-      workers: e.worker
-        ? [String(e.worker)]
-        : Array.isArray(e.workers)
-          ? e.workers.map(String)
-          : [],
-      status: String(e.status || "plan").toLowerCase() === "fact" ? "fact" : "plan",
+      quantity: Number.isFinite(quantity) ? quantity : 0,
+      unit_cost_origin: Number.isFinite(unit) ? unit : 0,
+      currency_origin: currency,
+      amount_origin,
+      amount_aed: 0,
+
+      seller: e.seller || null,
+      worker_id: e.worker ? String(e.worker) : null,
+      worker_name: e.workerName || null,
+
+      date_to_seller_payment: e.datePayment || null,
+      payment_note: e.paymentNote || null,
+      binded_sale: e.bindedSale ?? null,
+
+      cost_status:
+        String(e.status || "plan").toLowerCase() === "fact" ? "fact" : "plan",
+
+      edit_date: e.edit_date || now
     };
   });
 
-  const sale_part = (raw.sales || []).map((s) => {
-    const qty = Number(s.qty ?? 0);
+
+  const sales_part = (raw.sales || []).map((s) => {
+    const quantity = Number(s.quantity ?? 0);
     const unit = Number(s.unit_price ?? 0);
-    const total = Number.isFinite(qty * unit) ? Number((qty * unit).toFixed(4)) : 0;
     const currency = (s.currency || "USD").toUpperCase();
+
+    const amount_origin = Number.isFinite(quantity * unit)
+      ? Number((quantity * unit).toFixed(4))
+      : 0;
+
     return {
+      job_id: raw.job_id,
       description: s.description || "",
-      amount: { [currency]: total },
-      workers: s.worker
-        ? [String(s.worker)]
-        : Array.isArray(s.workers)
-          ? s.workers.map(String)
-          : [],
-      status: String(s.status || "plan").toLowerCase() === "fact" ? "fact" : "plan",
+      quantity,
+      unit_price_origin: unit,
+      currency_origin: currency,
+      amount_origin,
+      amount_aed: 0,
+      worker_id: s.worker ? String(s.worker) : null,
+      worker_name: s.workerName || null,
+
+      sale_status:
+        String(s.status || "plan").toLowerCase() === "fact" ? "fact" : "plan",
+
+      edit_date: s.edit_date || now
     };
   });
+
 
   const delivery_date = serviceDone ? `${ddmmyyyyToISO(serviceDone)}T00:00:00Z` : null;
 
@@ -76,6 +112,6 @@ export function buildJobApiData(raw, { serviceDone, archived }) {
     delivery_date,
     main_part,
     expenses_part,
-    sale_part,
+    sales_part,
   };
 }

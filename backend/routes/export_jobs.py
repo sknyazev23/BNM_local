@@ -27,7 +27,7 @@ def export_jobs(
     if worker:
         query["$or"] = [
             {"expenses_part.workers": worker},
-            {"sale_part.workers": worker}
+            {"sales_part.workers": worker}
         ]
     if status == "open":
         query["status"] = "open"
@@ -65,7 +65,7 @@ def export_jobs(
 
     for idx, job in enumerate(jobs, 1):
         worker_names = set()
-        for part in (job.get("expenses_part", []) + job.get("sale_part", [])):
+        for part in (job.get("expenses_part", []) + job.get("sales_part", [])):
             for wid in part.get("workers", []):
                 wdoc = workers_collection.find_one({"worker_id": wid})
                 worker_names.add(wdoc.get("name", wid) if wdoc else wid)
@@ -94,5 +94,5 @@ def export_jobs(
 
 def calculate_profit(job):
     usd_expenses = sum(float(e.get("cost", {}).get("USD", 0)) for e in job.get("expenses_part", []))
-    usd_sales    = sum(float(s.get("amount", {}).get("USD", 0)) for s in job.get("sale_part", []))
+    usd_sales    = sum(float(s.get("amount", {}).get("USD", 0)) for s in job.get("sales_part", []))
     return usd_sales - usd_expenses
