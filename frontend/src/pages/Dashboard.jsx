@@ -42,10 +42,10 @@ export default function Dashboard() {
   const toggleSort = (field) => {
     const order = sortBy === field && sortOrder === "asc" ? "desc" : "asc";
     const getter = (row) => {
-      if (field === "created_at")  return row.created_at  || "";
-      if (field === "bn_number")   return row.bn_number   || "";
+      if (field === "created_at") return row.created_at || "";
+      if (field === "bn_number") return row.bn_number || "";
       if (field === "client_name") return row.client_name || "";
-      if (field === "status")      return row.archived ? "archived" : "open";
+      if (field === "status") return row.archived ? "archived" : "open";
       return row[field] ?? "";
     };
     const sorted = [...filteredJobs].sort((a, b) => {
@@ -64,7 +64,7 @@ export default function Dashboard() {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
     const filtered = (jobs || []).filter((job) => {
-      const bn     = (job.bn_number   || "").toLowerCase();
+      const bn = (job.bn_number || "").toLowerCase();
       const client = (job.client_name || "").toLowerCase();
       const status = job.archived ? "archived" : "open";
       return bn.includes(term) || client.includes(term) || status.includes(term);
@@ -80,23 +80,22 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       {/* Список работ */}
-      <div className={`job-list ${selectedJob ? "narrow" : ""}`}>
+      <div className="job-list">
         <div className="job-controls">
           <div className="job-buttons">
 
             <button type="button" className="create"
-            onClick={() => {
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              const hours = String(now.getHours()).padStart(2, "0");
-              const minutes = String(now.getMinutes()).padStart(2, "0");
-              const seconds = String(now.getSeconds()).padStart(2, "0");
-
-              const autoJobId = `BN${year}${month}${day}-${hours}${minutes}${seconds}`;
-              navigate(`/job/${autoJobId}`);
-            }}
+              onClick={async () => {
+                try {
+                  const res = await API.get("/jobs/generate-id");
+                  if (res.data && res.data.job_id) {
+                    navigate(`/job/${res.data.job_id}`);
+                  }
+                } catch (err) {
+                  console.error("Failed to generate job ID", err);
+                  alert("Failed to create new job. See console for details.");
+                }
+              }}
             >
               <Plus size={16} /> Create
             </button>
@@ -129,22 +128,19 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Таблица */}
-        <table className="job-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>BN number</th>
-              <th>Client</th>
-              <th>Status</th>
-              <th>Created At</th>
-              <th>Closed At</th>
-              <th>Delivery Date</th>
-              <th>Workers</th>
-              <th>Profit (USD)</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="dashboard-table">
+          <div className="dashboard-table-header">
+            <span>#</span>
+            <span>BN number</span>
+            <span>Client</span>
+            <span>Status</span>
+            <span>Created At</span>
+            <span>Closed At</span>
+            <span>Delivery Date</span>
+            <span>Workers</span>
+            <span>Profit (USD)</span>
+          </div>
+          <div className="dashboard-table-body">
             {filteredJobs.slice(0, 20).map((job, index) => {
               const jobId = job.id || job._id || String(index);
               const workers = Array.isArray(job.workers) ? job.workers : [];
@@ -152,45 +148,35 @@ export default function Dashboard() {
               const profitText = Number.isFinite(profitNum) ? profitNum.toLocaleString() : "—";
 
               return (
-                <tr
+                <div
+                  className="dashboard-row"
                   key={jobId}
                   onClick={() => setSelectedJob(job)}
                   onDoubleClick={() => navigate(`/job/${jobId}`)}
                 >
-                  <td>{index + 1}</td>
-                  <td>{job.bn_number || "—"}</td>
-                  <td>{job.client_name || "—"}</td>
-                  <td>{job.archived ? "Archived" : "Open"}</td>
-                  <td>{fmtDate(job.created_at)}</td>
-                  <td>{fmtDate(job.closed_at)}</td>
-                  <td>{fmtDate(job.serviceDate || job.delivery_date)}</td>
-                  <td className="col-workers">
+                  <span>{index + 1}</span>
+                  <span>{job.bn_number || "—"}</span>
+                  <span>{job.client_name || "—"}</span>
+                  <span>{job.archived ? "Archived" : "Open"}</span>
+                  <span>{fmtDate(job.created_at)}</span>
+                  <span>{fmtDate(job.closed_at)}</span>
+                  <span>{fmtDate(job.serviceDate || job.delivery_date)}</span>
+                  <span className="col-workers">
                     {workers.length
                       ? workers.map((name, wi) => (
-                          <div key={`${jobId}-w-${wi}`}>{name}</div>
-                        ))
+                        <div key={`${jobId}-w-${wi}`}>{name}</div>
+                      ))
                       : "—"}
-                  </td>
-                  <td>{profitText}</td>
-                </tr>
+                  </span>
+                  <span>{profitText}</span>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
 
-      {/* Панель деталей */}
-      {selectedJob && (
-        <div className="job-details">
-          <h3>Job Details</h3>
-          {Object.entries(selectedJob).map(([key, value]) => (
-            <div key={key}>
-              <span className="label">{key}:</span>{" "}
-              <span>{typeof value === "object" ? JSON.stringify(value) : String(value)}</span>
-            </div>
-          ))}
-        </div>
-      )}
+
 
       {/* Модалка добавления работника */}
       {showWorkerModal && (

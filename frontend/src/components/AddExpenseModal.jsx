@@ -6,7 +6,7 @@ import { format4 } from "../utils/numberFormat";
 import { toAED } from "../utils/currency";
 import PlanFactToggle from "./PlanFactToggle";
 
-export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, job_id }) {
+export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, jobId }) {
   const [sales, setSales] = useState([]);
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
@@ -16,7 +16,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     sale_id: "",
     quantity: "",
     unit_cost: "",
-    currency: "USD",
+    currency: "",
     seller: "",
     worker: "",
     date_to_seller_payment: "",
@@ -28,7 +28,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
   const amount = useMemo(() => {
     const q = parseFloat(formData.quantity) || 0;
     const u = parseFloat(formData.unit_cost) || 0;
-    const res = q*u;
+    const res = q * u;
     return Number.isFinite(res) ? res : 0;
   }, [formData.quantity, formData.unit_cost]);
 
@@ -47,15 +47,15 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
       alert("Cost description is required!");
       return null;
     }
-  
+
     const quantity = parseInt(formData.quantity || 0, 10);
     const unit_cost_origin = parseFloat(formData.unit_cost || 0);
     const currency_origin = formData.currency || "USD";
     const amount_origin = quantity * unit_cost_origin;
     const amount_aed = toAED(amount_origin, currency_origin, rates);
     const mainWorker = workersList.find(w => w.id === formData.worker);
-    if (!job_id) {
-      alert("Job_id is required! ");
+    if (!jobId) {
+      alert("Job ID is required! ");
       return null;
     }
 
@@ -67,12 +67,12 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     }
 
     return {
-      job_id: job_id,
+      job_id: jobId,
       sale_id: sale_id,
       description: formData.description.trim(),
       quantity,
       unit_cost_origin,
-      currency_origin: formData.currency || "USD",
+      currency_origin: formData.currency || "",
       amount_origin,
       amount_aed,
       seller: formData.seller?.trim() || null,
@@ -82,9 +82,14 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
       payment_note: formData.payment_note?.trim() || null,
       cost_status: isPlan ? "plan" : "fact",
       edit_date: new Date().toISOString(),
+      // form-internal aliases for display and re-edit
+      currency: formData.currency || "",
+      unit_cost: unit_cost_origin,
+      worker: formData.worker || "",
+      status: isPlan ? "plan" : "fact",
     };
   };
-  
+
 
   useEffect(() => {
     if (isOpen) {
@@ -96,9 +101,9 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
 
 
   useEffect(() => {
-    if (!isOpen || !job_id) return;
+    if (!isOpen || !jobId) return;
 
-    API.get(`/sales/by-job?job_id=${job_id}`)
+    API.get(`/sales/by-job?job_id=${jobId}`)
       .then(res => {
         setSales(res.data || []);
       })
@@ -106,13 +111,13 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
         console.error("Error loading sales", err);
         setSales([]);
       });
-  }, [isOpen, job_id]);
+  }, [isOpen, jobId]);
 
 
   // Загружаем данные при открытии
   useEffect(() => {
-    if (!job_id) {
-      console.error("AddExpenseModal opened without job_id");
+    if (!jobId) {
+      console.error("AddExpenseModal opened without jobId");
       return;
     }
     setFormData({
@@ -120,7 +125,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
       sale_id: existingData.sale_id ?? "",
       quantity: existingData.quantity ?? "",
       unit_cost: existingData.unit_cost_origin ?? "",
-      currency: existingData.currency_origin ?? "USD",
+      currency: existingData.currency ?? existingData.currency_origin ?? "",
       seller: existingData.seller ?? "",
       worker: existingData.worker_id ?? "",
       date_to_seller_payment: existingData.date_to_seller_payment ?? "",
@@ -129,7 +134,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
 
     setIsEdited(false);
     setIsPlan(getIsPlan(existingData));
-  }, [existingData, isOpen, job_id]);
+  }, [existingData, isOpen, jobId]);
 
   // Отслеживание изменений
   const handleChange = (field, value) => {
@@ -142,7 +147,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     e.preventDefault();
 
     const expenseData = formExpense();
-    if(!expenseData) return;
+    if (!expenseData) return;
 
     const payload = {
       job_id: expenseData.job_id,
@@ -168,8 +173,18 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     console.log("Send expense to Expenses_collection: ", payload);
 
     try {
-      const res = await API.post("/expenses", payload);
-      if (onSave) onSave(res.data);
+      let res;
+      if (existingData._id) {
+        res = await API.put(`/expenses/${existingData._id}`, payload);
+        if (onSave) {
+          onSave({ ...payload, _id: existingData._id, unit_cost: payload.unit_cost_origin, description: payload.cost_description, worker: payload.worker_id });
+        }
+      } else {
+        res = await API.post("/expenses", payload);
+        if (onSave) {
+          onSave({ ...payload, _id: res.data.expense_id, unit_cost: payload.unit_cost_origin, description: payload.cost_description, worker: payload.worker_id });
+        }
+      }
       setIsEdited(false);
       onClose();
     } catch (err) {
@@ -184,7 +199,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     if (isEdited) {
       if (confirm("Save changes before closing?")) {
         const expenseData = formExpense();
-        if(!expenseData) return;
+        if (!expenseData) return;
         onSave(expenseData);
       }
     }
@@ -197,97 +212,140 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-no"># {displayNo}</div>
-        <h3 className="modal-title">Add Expense</h3>
+        <h3 className="modal-title">Expense</h3>
 
         <form onSubmit={handleSave}>
           <div className="modal-grid">
-            
-            <input placeholder="Cost description" value={formData.description || ""} onChange={(e) => handleChange("description", e.target.value)} />
-            <input
-              placeholder="Quantity"
-              type="number"
-              min="0"
-              step="1"
-              value={formData.quantity ?? ""}
-              onKeyDown={(e) => {
-                if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
-              }}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v === "") {
-                  handleChange("quantity", "");
-                  return;
-                }
-                const n = parseInt(v, 10);
-                handleChange("quantity", Number.isFinite(n) ? Math.max(0, n) : 0);
-              }}
-              onBlur={(e) => {
-                const n = parseInt(e.target.value, 10);
-                const cleaned = Number.isFinite(n) ? Math.max(0, n) : "";
-                e.target.value = String(cleaned);
-                handleChange("quantity", cleaned);
-              }}
-            />
 
-            <input placeholder="Cost per unit" type="number" value={formData.unit_cost || ""}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "") return handleChange("unit_cost", "");
-              const n = parseFloat(v);
-              handleChange("unit_cost", Number.isFinite(n) ? n : "");
-            }} />
-            <div>Amount: {showAmounts ? format4(amount) : ""}</div>
+            <div className="floating-input-group">
+              <input placeholder=" " value={formData.description || ""} onChange={(e) => handleChange("description", e.target.value)} />
+              <label>Cost description</label>
+              <fieldset aria-hidden="true"><legend><span>Cost description</span></legend></fieldset>
+            </div>
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                type="number"
+                min="0"
+                step="1"
+                value={formData.quantity ?? ""}
+                onKeyDown={(e) => {
+                  if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
+                }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "") {
+                    handleChange("quantity", "");
+                    return;
+                  }
+                  const n = parseInt(v, 10);
+                  handleChange("quantity", Number.isFinite(n) ? Math.max(0, n) : 0);
+                }}
+                onBlur={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    handleChange("quantity", "");
+                    return;
+                  }
+                  const n = parseInt(val, 10);
+                  const cleaned = Number.isFinite(n) ? Math.max(0, n) : "";
+                  e.target.value = String(cleaned);
+                  handleChange("quantity", cleaned);
+                }}
+              />
+              <label>Quantity</label>
+              <fieldset aria-hidden="true"><legend><span>Quantity</span></legend></fieldset>
+            </div>
 
-            <select value={formData.currency || ""} onChange={(e) => handleChange("currency", e.target.value)}>
-              <option value="">Currency</option>
-              <option value="USD">USD</option>
-              <option value="AED">AED</option>
-              <option value="RUB">RUB</option>
-              <option value="EUR">EUR</option>
-            </select>
+            <div className="floating-input-group">
+              <input placeholder=" " type="number" value={formData.unit_cost || ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "") return handleChange("unit_cost", "");
+                  const n = parseFloat(v);
+                  handleChange("unit_cost", Number.isFinite(n) ? n : "");
+                }} />
+              <label>Cost per unit</label>
+              <fieldset aria-hidden="true"><legend><span>Cost per unit</span></legend></fieldset>
+            </div>
+            <div style={{ padding: "12px 14px", color: "#2dd4bf" }}>
+              Amount: {showAmounts ? format4(amount) : ""}{showAmounts && formData.currency ? ` ${formData.currency}` : ""}
+            </div>
 
-            <div>Cost amount in AED: {showAmounts ? format4(amountAED) : ""}</div>
+            <div className="floating-input-group">
+              <select value={formData.currency || ""} onChange={(e) => handleChange("currency", e.target.value)}>
+                <option value=""></option>
+                <option value="USD">USD</option>
+                <option value="AED">AED</option>
+                <option value="RUB">RUB</option>
+                <option value="EUR">EUR</option>
+              </select>
+              <label>Currency</label>
+              <fieldset aria-hidden="true"><legend><span>Currency</span></legend></fieldset>
+            </div>
+
+            <div style={{ padding: "12px 14px", color: "#2dd4bf" }}>Cost amount in AED: {showAmounts ? format4(amountAED) : ""}</div>
 
 
-            <input placeholder="Seller" value={formData.seller || ""} onChange={(e) => handleChange("seller", e.target.value)} />
+            <div className="floating-input-group">
+              <input placeholder=" " value={formData.seller || ""} onChange={(e) => handleChange("seller", e.target.value)} />
+              <label>Seller</label>
+              <fieldset aria-hidden="true"><legend><span>Seller</span></legend></fieldset>
+            </div>
 
-            <select value={formData.worker || ""} onChange={(e) => handleChange("worker", e.target.value)}>
-              <option value="">Choose worker</option>
-              {workersList.map(w => (
-                <option key={w.id || w._id} value={w.id || w._id}>{w.name}</option>
-              ))}
-            </select>
+            <div className="floating-input-group">
+              <select value={formData.worker || ""} onChange={(e) => handleChange("worker", e.target.value)}>
+                <option value=""></option>
+                {workersList.map(w => (
+                  <option key={w.id || w._id} value={w.id || w._id}>{w.name}</option>
+                ))}
+              </select>
+              <label>Choose worker</label>
+              <fieldset aria-hidden="true"><legend><span>Choose worker</span></legend></fieldset>
+            </div>
 
             {/* Binded Sale */}
-            <select
-              value={formData.sale_id ?? ""}
-              onChange={(e) => handleChange("sale_id", e.target.value)}
-            
-            >
-              <option value="">Binded Sale</option>
-              {sales.map(s => (
+            <div className="floating-input-group">
+              <select
+                value={formData.sale_id ?? ""}
+                onChange={(e) => handleChange("sale_id", e.target.value)}
+
+              >
+                <option value=""></option>
+                {sales.map(s => (
 
                   <option key={s._id} value={s._id}>
                     {s.description}
                   </option>
                 ))}
-            </select>
+              </select>
+              <label>Binded Sale</label>
+              <fieldset aria-hidden="true"><legend><span>Binded Sale</span></legend></fieldset>
+            </div>
 
-            <input
-              type={formData.date_to_seller_payment ? "date" : "text"}
-              placeholder="Date of our payment to Seller"
-              value={formData.date_to_seller_payment || ""}
-              onFocus={(e) => (e.target.type = "date")}
-              onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-              onChange={(e) => handleChange("date_to_seller_payment", e.target.value)}
-            />
+            <div className="floating-input-group">
+              <input
+                type={formData.date_to_seller_payment ? "date" : "text"}
+                placeholder=" "
+                value={formData.date_to_seller_payment || ""}
+                onFocus={(e) => (e.target.type = "date")}
+                onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+                onChange={(e) => handleChange("date_to_seller_payment", e.target.value)}
+              />
+              <label>Date of our payment to Seller</label>
+              <fieldset aria-hidden="true"><legend><span>Date of our payment to Seller</span></legend></fieldset>
+            </div>
 
-            <textarea
-              placeholder="Payment note"
-              rows={2}
-              value={formData.payment_note || ""}
-              onChange={(e) => handleChange("payment_note", e.target.value)}
-            />
+            <div className="floating-input-group">
+              <textarea
+                placeholder=" "
+                rows={2}
+                value={formData.payment_note || ""}
+                onChange={(e) => handleChange("payment_note", e.target.value)}
+              />
+              <label>Payment note</label>
+              <fieldset aria-hidden="true"><legend><span>Payment note</span></legend></fieldset>
+            </div>
 
 
           </div>
@@ -301,11 +359,11 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
         <div className="modal-date">
           <PlanFactToggle value={isPlan} onChange={setIsPlan} />
           <time className="date-text">
-          {new Date().toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-          })}
+            {new Date().toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric"
+            })}
           </time>
         </div>
       </div>

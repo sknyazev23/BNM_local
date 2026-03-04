@@ -1,64 +1,75 @@
 /* выводы */
-.end-summary{
-  margin-top:14px;
-  margin-bottom:16px;            /* отступ над кнопками */
-  padding:16px 20px;
-  position: relative;            /* нужно для псевдо-элемента */
-  border-radius:12px;
+.end-summary {
+  margin-top: 14px;
+  margin-bottom: 16px;
+  /* отступ над кнопками */
+  padding: 16px 20px;
+  position: relative;
+  /* нужно для псевдо-элемента */
+  border-radius: 12px;
 
   /* вместо сплошного фона — лёгкий градиент */
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.14));
-  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(0, 0, 0, .14));
+  border: 1px solid rgba(255, 255, 255, .12);
 
   /* объём: внешние тени + внутренние блики/края */
   box-shadow:
-    0 12px 24px rgba(0,0,0,.35),     /* глубокая внешняя тень */
-    0 2px 6px rgba(0,0,0,.25),       /* дополнительная глубина */
-    inset 0 1px 0 rgba(255,255,255,.12), /* верхний внутренний блик */
-    inset 0 -1px 0 rgba(0,0,0,.35);  /* нижний внутренний край */
+    0 12px 24px rgba(0, 0, 0, .35),
+    /* глубокая внешняя тень */
+    0 2px 6px rgba(0, 0, 0, .25),
+    /* дополнительная глубина */
+    inset 0 1px 0 rgba(255, 255, 255, .12),
+    /* верхний внутренний блик */
+    inset 0 -1px 0 rgba(0, 0, 0, .35);
+  /* нижний внутренний край */
 
-  font-size:18px;
+  font-size: 18px;
 }
 
-.end-summary .title{
-  color:#092c2a;
-  font-weight:600;
+.end-summary .title {
+  color: #092c2a;
+  font-weight: 600;
   font-size: 25px;
-  color: #71b280;
-  margin-left:auto;
+  color: #10f3f3;
+  margin-left: auto;
   text-align: right;
-  display:block;
-  width:max-content;
+  display: block;
+  width: max-content;
 }
 
-.end-summary .sum-row{
-  display:flex;
+.end-summary .sum-row {
+  display: flex;
   justify-content: space-between;
-  gap:12px;
-  align-items:flex-start;
-  margin:8px 0;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 8px 0;
 }
-.end-summary .sum-label{
-  width:210px;
-  color:#092c2a;
-  font-weight:600;
+
+.end-summary .sum-label {
+  width: 210px;
+  color: #092c2a;
+  font-weight: 600;
   font-size: 15px;
 }
+
 .end-summary .sum-value,
-.end-summary .sum-values{
-  flex:1;
-  color:#fff;
+.end-summary .sum-values {
+  flex: 1;
+  color: #fff;
   display: flex;
   align-items: center;
 }
 
-.end-summary .sum-value  {
+.end-summary .sum-value {
   font-size: 15px;
-  white-space: pre-line; 
+  white-space: pre-line;
 }
-.end-summary .sum-values { font-size: 17px; }
 
-.end-summary .sum-value > span + span::before{
+.end-summary .sum-values {
+  font-size: 17px;
+}
+
+.end-summary .sum-value>span+span::before {
   content: "";
   position: absolute;
   left: 0;
@@ -66,35 +77,38 @@
   transform: translateY(-50%);
   width: 1px;
   height: 1.1em;
-  background: rgba(255,255,255,.35);
+  background: rgba(255, 255, 255, .35);
 }
 
-.end-summary::after{
-  content:"";
-  position:absolute;
-  inset:1px;                       /* тонкая «внутренняя плёнка» по краю */
-  border-radius:10px;
-  pointer-events:none;
-  background: radial-gradient(120% 60% at 50% 0%, rgba(255,255,255,.06), transparent 70%);
+.end-summary::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  /* тонкая «внутренняя плёнка» по краю */
+  border-radius: 10px;
+  pointer-events: none;
+  background: radial-gradient(120% 60% at 50% 0%, rgba(255, 255, 255, .06), transparent 70%);
 }
 
 /* правая колонка с лейблами один под другим */
-.end-summary .sum-right{
-  display:flex;
-  flex-direction:column;
-  gap:10px;              /* расстояние между двумя правыми строками */
-  min-width:320px;       /* чтобы числа справа не ломали layout */
+.end-summary .sum-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* расстояние между двумя правыми строками */
+  min-width: 320px;
+  /* чтобы числа справа не ломали layout */
 }
 
 /* каждая строка справа: лейбл + значение в ряд */
-.end-summary .sum-right-item{
-  display:flex;
-  align-items:center;
-  gap:8px;
+.end-summary .sum-right-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* правым лейблам ширину не фиксируем жёстко */
-.end-summary .sum-right .sum-label{
-  width:auto;
-  min-width:180px;
+.end-summary .sum-right .sum-label {
+  width: auto;
+  min-width: 180px;
 }

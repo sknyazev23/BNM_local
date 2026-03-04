@@ -1,36 +1,46 @@
+html {
+  min-height: 100%;
+}
+
 body {
-  background-color: #1a1a1a;
+  background: linear-gradient(to bottom, #134E5E, #71B280);
+  background-attachment: fixed;
+  background-size: cover;
   color: #ffffff;
   font-family: Arial, sans-serif;
   margin: 0;
+  min-height: 100vh;
 }
 
-:root{
-/* ширина бланка */
-  --jobform-width: 1150px; 
+:root {
+  /* ширина бланка */
+  --jobform-width: 1150px;
 }
 
 .job-form-wrapper {
   width: var(--jobform-width);
   margin: 24px auto;
   padding: 32px;
-  background: linear-gradient(to bottom, #134E5E, #71B280);
+  background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
   overflow: visible;
   box-shadow: 0 18px 28px rgba(0, 0, 0, 0.55);
 }
 
-h2, h3 {
+h2,
+h3 {
   color: #073231;
   margin-bottom: 16px;
 }
 
 .row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   background-color: #0f1f1f;
   color: #ffffff;
   border: 1px solid #555;
@@ -43,6 +53,142 @@ input, select, textarea {
 
 input::placeholder {
   color: #888;
+}
+
+.floating-input-group {
+  position: relative;
+  display: flex;
+  width: 100%;
+  margin-bottom: 3px;
+  margin-top: 8px;
+  /* Room for overhanging label */
+  background-color: transparent;
+  border-radius: 8px;
+}
+
+.floating-input-group input,
+.floating-input-group select,
+.floating-input-group textarea {
+  width: 100%;
+  background-color: transparent !important;
+  color: #ffffff;
+  border: none !important;
+  padding: 14px 14px;
+  /* Sufficient padding so text drops below label */
+  box-sizing: border-box;
+  font-size: 14px;
+  margin: 0;
+  outline: none;
+  z-index: 1;
+  /* Keep above fieldset */
+}
+
+.floating-input-group label {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  pointer-events: none;
+  transition: transform 0.2s ease, top 0.2s ease, font-size 0.2s ease, color 0.2s ease;
+  background: transparent !important;
+  /* Fully transparent! */
+  padding: 0;
+  font-size: 14px;
+  z-index: 2;
+  margin: 0;
+}
+
+/* For textarea, start label at top-left, not vertically centered */
+.floating-input-group:has(textarea) label {
+  top: 14px;
+  transform: none;
+}
+
+/* Float label */
+.floating-input-group input:focus~label,
+.floating-input-group input:not(:placeholder-shown)~label,
+.floating-input-group select:focus~label,
+.floating-input-group select:not([value=""])~label,
+.floating-input-group textarea:focus~label,
+.floating-input-group textarea:not(:placeholder-shown)~label {
+  top: 0;
+  transform: translateY(-50%);
+  /* Precisely halfway through top container edge */
+  font-size: 12px;
+  color: #2dd4bf;
+}
+
+
+
+/* Fieldset Outline */
+.floating-input-group fieldset {
+  position: absolute;
+  top: 0;
+  /* Aligned to container edge, preventing border overlap with element above */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  pointer-events: none;
+  transition: border-color 0.2s;
+  z-index: 0;
+}
+
+.floating-input-group input:focus~fieldset,
+.floating-input-group select:focus~fieldset,
+.floating-input-group textarea:focus~fieldset {
+  border-color: #2dd4bf;
+  border-width: 1px;
+}
+
+/* Keep teal border when field is filled (not just focused) */
+.floating-input-group input:not(:placeholder-shown)~fieldset,
+.floating-input-group textarea:not(:placeholder-shown)~fieldset,
+.floating-input-group select:not([value=""])~fieldset {
+  border-color: #2dd4bf;
+}
+
+/* The legend creates the gap */
+.floating-input-group legend {
+  visibility: hidden;
+  display: block;
+  width: auto;
+  padding: 0;
+  height: 0;
+  font-size: 12px;
+  /* Matches floating label font size */
+  max-width: 0.01px;
+  line-height: inherit;
+  transition: max-width 50ms ease;
+  white-space: nowrap;
+}
+
+.floating-input-group legend span {
+  padding-left: 4px;
+  padding-right: 4px;
+  /* 2mm gap specification */
+  display: inline-block;
+}
+
+/* Expand legend width to break frame when floating */
+.floating-input-group input:focus~fieldset legend,
+.floating-input-group input:not(:placeholder-shown)~fieldset legend,
+.floating-input-group select:focus~fieldset legend,
+.floating-input-group select:not([value=""])~fieldset legend,
+.floating-input-group textarea:focus~fieldset legend,
+.floating-input-group textarea:not(:placeholder-shown)~fieldset legend {
+  max-width: 100%;
+}
+
+/* Fix dropdown options invisibility (white text on browser default background) */
+.floating-input-group select option {
+  background-color: #1a1a1a;
+  /* Dark background so white text is visible */
+  color: #ffffff;
 }
 
 section {
@@ -82,7 +228,8 @@ button svg {
   flex-wrap: wrap;
 }
 
-.grid-2, .grid-3 {
+.grid-2,
+.grid-3 {
   display: grid;
   gap: 12px;
 }
@@ -91,10 +238,11 @@ button svg {
   grid-template-columns: 1fr 1fr;
 }
 
-.grid-2-1-1{
+.grid-2-1-1 {
   display: grid;
   gap: 12px;
-  grid-template-columns: 2.03fr 1fr 1fr; /* 50% / 25% / 25% */
+  grid-template-columns: 2.03fr 1fr 1fr;
+  /* 50% / 25% / 25% */
 }
 
 
@@ -143,97 +291,153 @@ textarea {
   box-sizing: border-box;
 }
 
-.expenses-cards { display:block; margin-top:8px; }
-
-.expense-card-row{
-  display:grid;
-  grid-template-columns: 30px 150px 30px 120px 120px 100px 140px 150px 150px 80px;
-  align-items:center;
-  gap:1px;
-
-  padding:2px 2px;
-  margin:3px 0;
-  background:#0f1f1f;
-  border:1px solid #555;
-  border-radius:8px;
-  transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
+/* Compact floating-input-group inside rates-row */
+.rates-row .floating-input-group {
+  width: 160px;
+  flex-shrink: 0;
+  margin-top: 0;
 }
-.expense-card-row:hover{
-  background:#309374;
-  border-color:#777;
-  box-shadow:0 0 0 2px rgba(255,255,255,.06);
+
+.expenses-cards {
+  display: block;
+  margin-top: 8px;
+}
+
+.expense-card-row {
+  display: grid;
+  grid-template-columns: 30px 150px 30px 120px 120px 100px 140px 150px 150px 80px;
+  align-items: center;
+  gap: 1px;
+
+  padding: 4px 8px;
+  margin: 6px 0;
+  background: transparent;
+  border: 1px solid #2dd4bf44;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.expense-card-row:hover {
+  background: rgba(45, 212, 191, 0.07);
+  border-color: #2dd4bf99;
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, .12);
 }
 
 /* ячейки */
-.ex-cell{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#e6e6e6; font-size:14px; text-align:center; }
-.ex-cell.desc{ text-align:left; }     /* описание — слева */
-.ex-cell.num{ font-weight:700; color:#9dd6d3; }
+.ex-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e6e6e6;
+  font-size: 14px;
+  text-align: center;
+  padding: 0 4px;
+  border-right: 1px solid rgba(45, 212, 191, 0.15);
+}
+
+.ex-cell:last-of-type {
+  border-right: none;
+}
+
+.ex-cell.desc {
+  text-align: left;
+}
+
+/* описание — слева */
+.ex-cell.num {
+  font-weight: 700;
+  color: #9dd6d3;
+}
 
 /* кнопки действий — по одной в каждой из двух последних колонок */
-.ex-action-btn{
-  border:1px solid #ffffff33;
-  background:transparent;
-  color:#2dd4bf;
-  padding:3px 3px;
-  border-radius:8px;
-  cursor:pointer;
-  flex:1;
-  display:inline-flex; align-items:center; justify-content:center;
-  transition:background-color .15s ease, border-color .15s ease, transform .05s ease;
+.ex-action-btn {
+  border: 1px solid #ffffff33;
+  background: transparent;
+  color: #2dd4bf;
+  padding: 3px 3px;
+  border-radius: 8px;
+  cursor: pointer;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color .15s ease, border-color .15s ease, transform .05s ease;
 }
-.ex-action-btn:hover{ background:#2dd4bf22; border-color:#2dd4bf66; }
-.ex-action-btn:active{ transform:translateY(1px); }
+
+.ex-action-btn:hover {
+  background: #2dd4bf22;
+  border-color: #2dd4bf66;
+}
+
+.ex-action-btn:active {
+  transform: translateY(1px);
+}
 
 /* красная кнопка Delete */
-.ex-action-btn.danger{ color:#e72727; }
-.ex-action-btn.danger:hover{ background:#ed0c50ca; border-color:#f8717166; }
+.ex-action-btn.danger {
+  color: #f87171 !important;
+  border-color: #f8717133;
+}
+
+.ex-action-btn.danger svg {
+  stroke: #f87171;
+}
+
+.ex-action-btn.danger:hover {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: #f8717166;
+}
 
 /* колонка действий: кнопки в один ряд */
-.ex-actions-col{
+.ex-actions-col {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  gap: 2px;
+  gap: 4px;
+  padding: 2px 6px 2px 0;
 }
 
 /* Панель над списком расходов (суммы + кнопка) */
-.exp-toolbar{
-  display:flex;
-  align-items:center;
-  gap:16px;
-  margin:8px 10px 22px;
-  flex-wrap:wrap;
+.exp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 10px 22px;
+  flex-wrap: wrap;
 }
 
-.exp-toolbar .totals{
-  display:flex;
-  align-items:center;
-  gap:34px;
-  color:#d2f3f1;
-  font-size:14px;
+.exp-toolbar .totals {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  color: #2dd4bf;
+  font-size: 14px;
 }
 
-.totals > span + span {
+.totals>span+span {
   position: relative;
-  padding-left: 38px;       /* отступ после палки */
+  padding-left: 38px;
+  /* отступ после палки */
 }
 
-.exp-toolbar .totals > span + span::before {
+.exp-toolbar .totals>span+span::before {
   content: "";
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 1px;
-  height: 1.1em;            /* высота палки */
-  background: rgba(255,255,255,.35);
+  height: 1.1em;
+  /* высота палки */
+  background: rgba(255, 255, 255, .35);
 }
 
 /* уводим кнопку вправо, не ломая общую .bn-btn */
-.exp-toolbar .bn-btn{
-  margin-left:auto;
-  margin-top:0;
+.exp-toolbar .bn-btn {
+  margin-left: auto;
+  margin-top: 0;
 }
 
 
@@ -244,9 +448,9 @@ textarea {
  }
  */
 
- 
- /* ==== Bottom actions (Save / Delete / Toggles) ==== */
-.job-actions{
+
+/* ==== Bottom actions (Save / Delete / Toggles) ==== */
+.job-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -256,48 +460,49 @@ textarea {
   width: 100%;
 }
 
-.actions-left{
+.actions-left {
   display: flex;
   gap: 6px;
   flex-wrap: nowrap;
 }
 
-.toggles{
-  margin-left:auto;
-  display:flex;
-  gap:20px;
-  align-items:center;
+.toggles {
+  margin-left: auto;
+  display: flex;
+  gap: 20px;
+  align-items: center;
   color: #02292e;
 }
 
-.toggle{
-  display:inline-flex;
-  gap:8px;
-  align-items:center;
-  font-size:14px;
-  white-space:nowrap;
+.toggle {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-.s-date{
-  width:12ch;
-  border-radius:6px;
-  text-align:center;
+.s-date {
+  width: 12ch;
+  border-radius: 6px;
+  text-align: center;
   opacity: .9;
-  
+
 }
 
-.toggle input{
-  width:18px; height:18px;
+.toggle input {
+  width: 18px;
+  height: 18px;
 }
 
 /* общая стилизация кнопок внизу */
-.job-actions .bn-btn{
+.job-actions .bn-btn {
   display: inline-flex;
   gap: 8px;
   padding: 8px 14px;
   border-radius: 10px;
 
-  border: 1px solid rgba(255,255,255,.15);
+  border: 1px solid rgba(255, 255, 255, .15);
   color: #edf9f7;
   font-weight: 500;
   transition:
@@ -307,54 +512,57 @@ textarea {
     transform .05s ease;
 }
 
-.job-actions .bn-btn:hover{
-  background: rgba(255,255,255,.07);
-  border-color: rgba(255,255,255,.25);
-  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+.job-actions .bn-btn:hover {
+  background: rgba(255, 255, 255, .07);
+  border-color: rgba(255, 255, 255, .25);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
   transform: translateY(-1px) scale(1.05);
 }
 
-.job-actions .bn-btn:active{
+.job-actions .bn-btn:active {
   transform: translateY(0);
   box-shadow: none;
 }
 
-.job-actions .bn-btn:disabled{
+.job-actions .bn-btn:disabled {
   opacity: .55;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.job-actions .bn-btn svg{
-  stroke: currentColor; /* иконка под цвет текста */
+.job-actions .bn-btn svg {
+  stroke: currentColor;
+  /* иконка под цвет текста */
 }
 
 /* модификаторы */
-.job-actions .bn-btn.bn-btn--accent{
+.job-actions .bn-btn.bn-btn--accent {
   color: #2dd4bf;
   border-color: #2dd4bf5c;
 }
-.job-actions .bn-btn.bn-btn--accent:hover{
-  background: rgba(45,212,191,.13);
+
+.job-actions .bn-btn.bn-btn--accent:hover {
+  background: rgba(45, 212, 191, .13);
   border-color: #2dd4bf88;
 }
 
-.job-actions .bn-btn.bn-btn--danger{
+.job-actions .bn-btn.bn-btn--danger {
   color: #d62727;
   border-color: #fb474766;
 }
-.job-actions .bn-btn.bn-btn--danger:hover{
-  background: rgba(248,113,113,.12);
+
+.job-actions .bn-btn.bn-btn--danger:hover {
+  background: rgba(248, 113, 113, .12);
   border-color: #e02d2d;
 }
 
-.job-actions .bn-btn.bn-btn--muted{
+.job-actions .bn-btn.bn-btn--muted {
   color: #e5e7eb;
-  border-color: rgba(170,170,170,.33);
-}
-.job-actions .bn-btn.bn-btn--muted:hover{
-  background: rgba(255,255,255,.06);
-  border-color: rgba(170,170,170,.6);
+  border-color: rgba(170, 170, 170, .33);
 }
 
+.job-actions .bn-btn.bn-btn--muted:hover {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(170, 170, 170, .6);
+}

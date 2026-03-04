@@ -31,8 +31,6 @@ def get_sales():
         s["_id"] = str(s["_id"])
     return sales
 
-
-# for expenseModal
 @router.get("/by-job")
 def get_sale_by_job(job_id: str):
     sales = list(
@@ -44,3 +42,42 @@ def get_sale_by_job(job_id: str):
     for s in sales:
         s["_id"] = str(s["_id"])
     return sales
+
+@router.get("/{sale_id}")
+def get_sale(sale_id: str):
+    sale = sales_collection.find_one({"_id": ObjectId(sale_id)})
+    if not sale:
+        raise HTTPException(404, detail="Sale not found")
+    sale["_id"] = str(sale["_id"])
+    return sale
+
+@router.delete("/{sale_id}")
+def delete_sale(sale_id: str):
+    result = sales_collection.delete_one({"_id": ObjectId(sale_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(404, detail="Sale not found")
+    return {"message": "Sale deleted", "sale_id": sale_id}
+
+
+
+@router.put("/{sale_id}")
+def update_sale(sale_id: str, sale: SaleItem):
+    if not sale.job_id:
+        raise HTTPException(400, detail="job_id required")
+        
+    sale_dict = sale.model_dump()
+    sale_dict["job_id"] = sale.job_id
+    
+    result = sales_collection.update_one(
+        {"_id": ObjectId(sale_id)},
+        {"$set": sale_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(404, detail="Sale not found")
+        
+    return {
+        "message": "Sale updated",
+        "sale_id": sale_id,
+        "job_id": sale.job_id
+    }

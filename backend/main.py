@@ -28,12 +28,20 @@ app = FastAPI(
 )
 
 
+import sys
+
 @app.on_event("startup")
 def _ensure_indexes():
+    sys.stdout.reconfigure(encoding='utf-8')
     print("Запуск: создание и проверка индексов MongoDB...")
 
     # ====================== JOBS ======================
-    jobs_collection.create_index([("BN_number", ASCENDING)], unique=True, name="unique_bn_number")
+    jobs_collection.create_index(
+        [("main_part.bn_number", ASCENDING)], 
+        unique=True, 
+        partialFilterExpression={"main_part.bn_number": {"$type": "string", "$gt": ""}},
+        name="unique_bn_number"
+    )
 
     jobs_collection.create_index([("archived", ASCENDING)], name="idx_archived")
     jobs_collection.create_index([("created_at", -1)], name="idx_created_desc")

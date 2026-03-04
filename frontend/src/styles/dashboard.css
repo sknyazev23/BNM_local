@@ -1,4 +1,6 @@
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -40,7 +42,7 @@ html, body, #root {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   /* 
   background-color: transparent;
   color: #ffffff;
@@ -60,7 +62,8 @@ html, body, #root {
 
 .job-buttons button:hover {
   transform: scale(1.05);
-  border-color: #00ffff; /* наводка — голубой контур */
+  border-color: #00ffff;
+  /* наводка — голубой контур */
   color: #00ffff;
 }
 
@@ -74,54 +77,114 @@ html, body, #root {
   outline: none;
 }
 
-.job-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: #2b2b2b;
+.dashboard {
+  padding: 0 24px;
 }
 
-.job-table th {
-  text-align: left;
-  padding: 8px;
-  background-color: #3a3a3a;
+.dashboard-table {
+  width: 100%;
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: auto;
+  padding-bottom: 24px;
+}
+
+:where(.dashboard-table-header, .dashboard-row) {
+  min-width: 1400px;
+}
+
+.dashboard-table-header {
   position: sticky;
   top: 0;
+  z-index: 10;
+  background: #2b2b2b;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns:
+    minmax(40px, 0.4fr)
+    /* # */
+    minmax(120px, 1.2fr)
+    /* BN number */
+    minmax(180px, 1.5fr)
+    /* Client */
+    minmax(100px, 0.9fr)
+    /* Status */
+    minmax(120px, 1.1fr)
+    /* Created At */
+    minmax(120px, 1.1fr)
+    /* Closed At */
+    minmax(120px, 1.1fr)
+    /* Delivery Date */
+    minmax(160px, 1.4fr)
+    /* Workers */
+    minmax(120px, 1.1fr);
+  /* Profit */
+  column-gap: 0;
+  font-weight: 700;
+}
+
+.dashboard-table-header span {
   color: #f5f5f5;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #555;
+  text-align: center;
 }
 
-.job-table td {
-  padding: 8px;
-  border-bottom: 1px solid #555;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #e0e0e0;
+.dashboard-table-header span:last-child {
+  border-right: none;
 }
 
-.job-table tr:hover {
-  background-color: #444;
+.dashboard-table-body {
+  display: block;
+  padding-top: 8px;
+}
+
+.dashboard-row {
+  display: grid;
+  grid-template-columns:
+    minmax(40px, 0.4fr) minmax(120px, 1.2fr) minmax(180px, 1.5fr) minmax(100px, 0.9fr) minmax(120px, 1.1fr) minmax(120px, 1.1fr) minmax(120px, 1.1fr) minmax(160px, 1.4fr) minmax(120px, 1.1fr);
+  column-gap: 12px;
+
+  align-items: center;
+  padding: 8px 12px;
+  margin: 6px 0;
+  background: #333333;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.2);
   cursor: pointer;
 }
 
-.job-details {
-  width: 25%;
-  padding: 16px;
-  background-color: #3a3a3a;
-  overflow-y: auto;
-  height: 100vh;
-  box-sizing: border-box;
-  border-left: 1px solid #555;
+.dashboard-row>* {
+  min-width: 0;
 }
 
-.job-details h3 {
-  font-size: 1.2rem;
-  margin-bottom: 16px;
-  color: #ffffff;
-}
-
-.job-details div {
-  margin-bottom: 12px;
-  word-wrap: break-word;
+.dashboard-row span {
+  font-size: 14px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: normal;
-  color: #ddd;
+  word-break: break-word;
+  color: #e0e0e0;
+  text-align: center;
+}
+
+.dashboard-row:hover {
+  background: #444;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(122, 235, 241, 0.3);
+}
+
+.col-workers div {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }

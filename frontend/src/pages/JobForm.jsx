@@ -64,10 +64,11 @@ export default function JobForm() {
     }
     return m;
   }, [workers]);
- 
+
   const [serviceDone, setServiceDone] = useState("");
-  const [archived, setArchived] = useState(false); 
+  const [archived, setArchived] = useState(false);
   const isReadOnly = !!archived
+  const [createdAt, setCreatedAt] = useState("");
 
   const { loaded } = useLoadJob(routeId, {
     setMongoId,
@@ -92,6 +93,7 @@ export default function JobForm() {
     setSales,
     setServiceDone,
     setArchived,
+    setCreatedAt,
   });
 
   const fxRates = useMemo(
@@ -116,37 +118,19 @@ export default function JobForm() {
 
   // 2) Сохранение
   const saveJob = async () => {
-    const wasNew = !loaded;
-    const hadChanges = wasNew ? true : (isDirty?.() ?? true);
-
     if (!client || (typeof client === "object" && !client.name)) {
       alert("Select client before saving");
       return;
     }
 
     const jobData = buildJobApiData(buildRaw(), { serviceDone, archived });
-    if (wasNew) {
-      jobData._id = jobMongoId;
-    }
+    jobData._id = jobMongoId;
     console.log("[saveJob] payload ->", jobData);
-    console.log("[saveJob] called. serviceDone =", serviceDone);
-    console.log("[saveJob] delivery_date =", jobData.delivery_date);  //
 
     try {
-      if (wasNew) {
-        const { data } = await API.post("/jobs/", jobData);
-        setJobMongoId(data?._id || "");
-      } else {
-        await API.put(`/jobs/${jobMongoId}`, jobData);
-      }
-
+      await API.put(`/jobs/${jobMongoId}`, jobData);
       setSnapshot();
-
-      if (hadChanges) alert("Congrats! Job saved.");
-
-      if (wasNew) {
-        await exitToDashboard();
-      }
+      alert("Job saved!");
     } catch (err) {
       const msg = err?.response?.data?.detail || err.message || "Unknown error";
       alert(`Save failed: ${msg}`);
@@ -169,12 +153,39 @@ export default function JobForm() {
 
   useEffect(() => {
     if (loaded) setSnapshot();
-  }, [loaded, setSnapshot]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
 
 
-  const removeExpense = (index) =>
-    setExpenses(expenses.filter((_, i) => i !== index));
-  const removeSale = (index) => setSales(sales.filter((_, i) => i !== index));
+  const removeExpense = async (index) => {
+    const expense = expenses[index];
+    if (confirm("Are you sure you want to delete this expense?")) {
+      try {
+        if (expense._id) {
+          await API.delete(`/expenses/${expense._id}`);
+        }
+        setExpenses(expenses.filter((_, i) => i !== index));
+      } catch (err) {
+        alert("Failed to delete expense");
+        console.error(err);
+      }
+    }
+  };
+
+  const removeSale = async (index) => {
+    const sale = sales[index];
+    if (confirm("Are you sure you want to delete this sale?")) {
+      try {
+        if (sale._id) {
+          await API.delete(`/sales/${sale._id}`);
+        }
+        setSales(sales.filter((_, i) => i !== index));
+      } catch (err) {
+        alert("Failed to delete sale");
+        console.error(err);
+      }
+    }
+  };
 
   // итоги по модалкам
   const expenseTotals = useMemo(
@@ -199,9 +210,10 @@ export default function JobForm() {
     isNonZero(saleTotals.sumAED) || isNonZero(saleTotals.sumUSD);
 
   // конверт в Excel
-    const exportToExcel = async () => {
+  const exportToExcel = async () => {
     const raw = {
-      ...buildRaw(), archived };
+      ...buildRaw(), archived
+    };
     await exportJobSummaryToExcel(
       raw,
       bnNumber ? `Job_${bnNumber}.xlsx` : undefined
@@ -210,14 +222,16 @@ export default function JobForm() {
 
   return (
     <div className="job-form-wrapper">
-      <h2 className="end-summary">
+      <h2 className="end-summary" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
 
-        {/* temp */}
-        job_id: <span style={{color: "red", fontWeight: "bold"}}> {jobMongoId || "not yet"}</span>
-        
-        <span className="title">
+        <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+          <span style={{ fontSize: "11px", color: "pink", fontStyle: "italic", fontWeight: 400 }}>job_id: {jobMongoId || "not yet"}</span>
+          {createdAt && <span className="title" style={{ fontSize: "15px", margin: 0, textAlign: "left", fontStyle: "normal", fontWeight: 600 }}>Date of issue: {createdAt}</span>}
+        </div>
+
+        <span className="title" style={{ margin: 0 }}>
           {jobMongoId && bnNumber
-            ? `Job # {bnNumber}` : "Create NEW Job"
+            ? `Job # ${bnNumber}` : "Create NEW Job"
           }
         </span>
       </h2>
@@ -227,78 +241,122 @@ export default function JobForm() {
         <h3 className="text-xl font-semibold mb-4">Main Part</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="row">
-            <input
-              className="bg-gray-700 p-2 rounded"
-              placeholder="BN Number"
-              value={bnNumber}
-              onChange={(e) => setBnNumber(e.target.value)}
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={bnNumber}
+                onChange={(e) => setBnNumber(e.target.value)}
+              />
+              <label>BN Number</label>
+              <fieldset aria-hidden="true"><legend><span>BN Number</span></legend></fieldset>
+            </div>
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={referBN}
+                onChange={(e) => setReferBN(e.target.value)}
+              />
+              <label>Refer BN</label>
+              <fieldset aria-hidden="true"><legend><span>Refer BN</span></legend></fieldset>
+            </div>
+          </div>
+
+          <div className="row">
+            <ClientSelect
+              value={typeof client === "object" ? (client.name ?? "") : client ?? ""}
+              onChange={setClient}
             />
-            <input
-              className="bg-gray-700 p-2 rounded"
-              placeholder="Refer BN"
-              value={referBN}
-              onChange={(e) => setReferBN(e.target.value)}
+            <ClientSelect
+              value={typeof consignee === "object" ? (consignee.name ?? "") : consignee ?? ""}
+              onChange={setConsignee}
+              placeholder="Consignee"
             />
           </div>
 
-          <ClientSelect
-            value={typeof client === "object" ? (client.name ?? "") : client ?? ""}
-            onChange={setClient}
-          />
+          <div className="row">
+            <div className="floating-input-group">
+              <textarea
+                rows={1}
+                placeholder=" "
+                value={carrier}
+                onInput={(e) => {
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                }}
+                onChange={(e) => setCarrier(e.target.value)}
+                style={{ resize: "none", overflow: "hidden" }}
+              />
+              <label>Carrier</label>
+              <fieldset aria-hidden="true"><legend><span>Carrier</span></legend></fieldset>
+            </div>
 
-          <input
-            className="bg-gray-700 p-2 rounded"
-            placeholder="Carrier"
-            value={carrier}
-            onChange={(e) => setCarrier(e.target.value)}
-          />
-          <input
-            className="bg-gray-700 p-2 rounded"
-            placeholder="Shipper"
-            value={shipper}
-            onChange={(e) => setShipper(e.target.value)}
-          />
-          <ClientSelect
-            value={typeof consignee === "object" ? (consignee.name ?? "") : consignee ?? ""}
-            onChange={setConsignee}
-            placeholder="Consignee"
-          />
+            <div className="floating-input-group">
+              <textarea
+                rows={1}
+                placeholder=" "
+                value={shipper}
+                onInput={(e) => {
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                }}
+                onChange={(e) => setShipper(e.target.value)}
+                style={{ resize: "none", overflow: "hidden" }}
+              />
+              <label>Shipper</label>
+              <fieldset aria-hidden="true"><legend><span>Shipper</span></legend></fieldset>
+            </div>
+          </div>
           <div className="grid-2-1-1">
-            <input
-              className="bg-gray-700 p-2 rounded"
-              placeholder="Commodity"
-              value={commodity}
-              onChange={(e) => setCommodity(e.target.value)}
-            />
-            <input
-              className="bg-gray-700 p-2 rounded"
-              placeholder="Quantity"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-            <input
-              className="bg-gray-700 p-2 rounded"
-              placeholder="Weight"
-              value={weight}
-              onChange={(e) => {
-                const val = validateNonNegativeTwoDecimals(e.target.value);
-                if (val !== null) setWeight(val);
-              }}
-            />
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={commodity}
+                onChange={(e) => setCommodity(e.target.value)}
+              />
+              <label>Commodity</label>
+              <fieldset aria-hidden="true"><legend><span>Commodity</span></legend></fieldset>
+            </div>
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+              />
+              <label>Quantity</label>
+              <fieldset aria-hidden="true"><legend><span>Quantity</span></legend></fieldset>
+            </div>
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={weight}
+                onChange={(e) => {
+                  const val = validateNonNegativeTwoDecimals(e.target.value);
+                  if (val !== null) setWeight(val);
+                }}
+              />
+              <label>Weight</label>
+              <fieldset aria-hidden="true"><legend><span>Weight</span></legend></fieldset>
+            </div>
           </div>
           <div className="row">
-            <input
-              className="bg-gray-700 p-2 rounded"
-              placeholder="Port of Loading"
-              value={portLoading}
-              onChange={(e) => setPortLoading(e.target.value)}
-            />
-            <input
-              className="bg-gray-700 p-2 rounded"
-              placeholder="Port of Discharge"
-              value={portDischarge}
-              onChange={(e) => setPortDischardge(e.target.value)}
-            />
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={portLoading}
+                onChange={(e) => setPortLoading(e.target.value)}
+              />
+              <label>Port of Loading</label>
+              <fieldset aria-hidden="true"><legend><span>Port of Loading</span></legend></fieldset>
+            </div>
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={portDischarge}
+                onChange={(e) => setPortDischardge(e.target.value)}
+              />
+              <label>Port of Discharge</label>
+              <fieldset aria-hidden="true"><legend><span>Port of Discharge</span></legend></fieldset>
+            </div>
           </div>
         </div>
       </section>
@@ -307,74 +365,83 @@ export default function JobForm() {
       <section className="mb-6">
         <h3 className="text-xl font-semibold mb-4">Currency Rates</h3>
         <div className="rates-row">
-          <label>
-            AED to USD:
+          <div className="floating-input-group">
             <input
               type="text"
               inputMode="decimal"
-              pattern="^\\d+(\\.\\d{0,4})?$"
-              placeholder="AED to USD"
+              placeholder=" "
               value={rateAEDUSD}
               onPaste={blockPaste}
               onKeyDown={onlyPositiveDecimal4}
               onBlur={decimal4Blur(setRateAEDUSD)}
               onChange={decimal4Change(setRateAEDUSD)}
             />
-          </label>
-          <label>
-            RUB to USD:
+            <label>AED to USD</label>
+            <fieldset aria-hidden="true"><legend><span>AED to USD</span></legend></fieldset>
+          </div>
+          <div className="floating-input-group">
             <input
               type="text"
               inputMode="decimal"
-              pattern="^\\d+(\\.\\d{0,4})?$"
-              placeholder="RUB to USD"
+              placeholder=" "
               value={rateRUBUSD}
               onPaste={blockPaste}
               onKeyDown={onlyPositiveDecimal4}
               onBlur={decimal4Blur(setRateRUBUSD)}
               onChange={decimal4Change(setRateRUBUSD)}
             />
-          </label>
-          <label>
-            AED to EUR:
+            <label>RUB to USD</label>
+            <fieldset aria-hidden="true"><legend><span>RUB to USD</span></legend></fieldset>
+          </div>
+          <div className="floating-input-group">
             <input
               type="text"
               inputMode="decimal"
-              pattern="^\\d+(\\.\\d{0,4})?$"
-              placeholder="AED to EUR"
+              placeholder=" "
               value={rateAEDEUR}
               onPaste={blockPaste}
               onKeyDown={onlyPositiveDecimal4}
               onBlur={decimal4Blur(setRateAEDEUR)}
               onChange={decimal4Change(setRateAEDEUR)}
             />
-          </label>
+            <label>AED to EUR</label>
+            <fieldset aria-hidden="true"><legend><span>AED to EUR</span></legend></fieldset>
+          </div>
         </div>
       </section>
+
 
       {/* Section 3: Payment */}
       <section className="mb-6">
         <h3 className="text-xl font-semibold mb-4">Payment</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <input
-            className="bg-gray-700 p-2 rounded"
-            placeholder="Payment Terms"
-            value={paymentTerms}
-            onChange={(e) => setPaymentTerms(e.target.value)}
-          />
-          <input
-            className="bg-gray-700 p-2 rounded"
-            placeholder="Payment Location"
-            value={paymentLocation}
-            onChange={(e) => setPaymentLocation(e.target.value)}
-          />
-          <ClientSelect
-            placeholder="Payer Company"
-            value={
-              typeof payerCompany === "object" ? payerCompany.name ?? "" : payerCompany ?? ""
-            }
-            onChange={setPayerCompany}
-          />
+        <div style={{ display: "flex", gap: "16px", alignItems: "stretch" }}>
+          <div className="floating-input-group" style={{ flex: 1 }}>
+            <input
+              placeholder=" "
+              value={paymentTerms}
+              onChange={(e) => setPaymentTerms(e.target.value)}
+            />
+            <label>Payment Terms</label>
+            <fieldset aria-hidden="true"><legend><span>Payment Terms</span></legend></fieldset>
+          </div>
+          <div className="floating-input-group" style={{ flex: 1 }}>
+            <input
+              placeholder=" "
+              value={paymentLocation}
+              onChange={(e) => setPaymentLocation(e.target.value)}
+            />
+            <label>Payment Location</label>
+            <fieldset aria-hidden="true"><legend><span>Payment Location</span></legend></fieldset>
+          </div>
+          <div style={{ flex: 1 }}>
+            <ClientSelect
+              placeholder="Payer Company"
+              value={
+                typeof payerCompany === "object" ? payerCompany.name ?? "" : payerCompany ?? ""
+              }
+              onChange={setPayerCompany}
+            />
+          </div>
         </div>
       </section>
 
@@ -389,7 +456,7 @@ export default function JobForm() {
             const quantity = Number(expense.quantity ?? expense.quantity ?? 0);
             const unit = Number(expense.unit_cost ?? 0);
             const amount = Number.isFinite(quantity * unit) ? quantity * unit : 0;
-            const currency = expense.currency || "USD";
+            const currency = expense.currency || expense.currency_origin || "";
             const amountAED = toAED(amount, currency, fxRates);
 
             return (
@@ -446,7 +513,8 @@ export default function JobForm() {
 
           <button
             type="button"
-            disabled={!jobMongoId}
+            disabled={!jobMongoId || sales.length === 0}
+            title={sales.length === 0 ? "You must add at least one Sale first" : undefined}
             onClick={() => {
               setCurrentExpense(null);
               setShowExpenseModal(true);
@@ -554,79 +622,69 @@ export default function JobForm() {
 
       {/* Buttons */}
       <div className="job-actions">
-        {!loaded ? (
-          // NEW BN
-          <div className="actions-left">
-            <button onClick={saveJob} className="bn-btn bn-btn--accent">
-              <Save size={18} /> Save
-            </button>
+        <div className="actions-left">
+          <button onClick={saveJob} className="bn-btn bn-btn--accent">
+            <Save size={18} /> Save
+          </button>
 
-            <button type="button" onClick={exitToDashboard} className="bn-btn bn-btn--muted">
-              Close & return to Dashboard
-            </button>
-          </div>
-        ) : (
-          <>
-          {/* existed BN */}
-          {/* buttons _left */}
-          <div className="actions-left">
-            <button type="button" onClick={async () => { console.log("[UI] Close clicked (existing)");
-            if (isDirty?.()) { await saveJob() };
+          <button type="button" onClick={async () => {
             await exitToDashboard();
-            }} className="bn-btn bn-btn--muted">
-              Close & return to Dashboard
-            </button>
+          }} className="bn-btn bn-btn--muted">
+            Close & return to Dashboard
+          </button>
 
-            <button type="button" onClick={async () => {
-              if (!jobMongoId) return;
-              if (confirm("BROTIK, Are you SURE?")) {
-                try {
-                  await API.delete(`/jobs/${jobMongoId}`);
-                  alert("Job have deleted!");
-                  exitToDashboard();
-                } catch (err) {
-                  const msg = err?.response?.data?.detail || err.message || "Delete failed";
-                  alert(msg);
-                  console.error(err);
+          {loaded && (
+            <>
+              <button type="button" onClick={async () => {
+                if (!jobMongoId) return;
+                if (confirm("Are you SURE you want to delete this job?")) {
+                  try {
+                    await API.delete(`/jobs/${jobMongoId}`);
+                    alert("Job deleted!");
+                    exitToDashboard();
+                  } catch (err) {
+                    const msg = err?.response?.data?.detail || err.message || "Delete failed";
+                    alert(msg);
+                    console.error(err);
+                  }
                 }
-              }
-            }}
-            className="bn-btn bn-btn--danger"
-            >
-              Delete Job
-            </button>
+              }}
+                className="bn-btn bn-btn--danger"
+              >
+                Delete Job
+              </button>
 
-            <button type="button" onClick={exportToExcel} className="bn-btn bn-btn--muted">
-              Export to Excel
-            </button>
-          </div>
+              <button type="button" onClick={exportToExcel} className="bn-btn bn-btn--muted">
+                Export to Excel
+              </button>
+            </>
+          )}
+        </div>
 
-          {/* дата & тумблер */}
-          <div className="toggles">
+        {/* дата & тумблер */}
+        <div className="toggles">
 
-            <label className="s-date">
-              <span>Service done</span>
-              <input type="date"
+          <label className="s-date">
+            <span>Service done</span>
+            <input type="date"
               value={serviceDone ? ddmmyyyyToISO(serviceDone) : ""}
               onChange={(e) => setServiceDone(isoToDDMMYYYY(e.target.value))}
               disabled={isReadOnly}
-              />
-            </label>
+            />
+          </label>
 
-            <label className="toggle">
-              <input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} />
-              <span>Archive (lock editing)</span>
-            </label>
-          </div>
-        </>  
-        )}
+          <label className="toggle">
+            <input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} />
+            <span>Archive (lock editing)</span>
+          </label>
+        </div>
       </div>
 
       {/* Рендер модалок */}
       {showExpenseModal && (
         <AddExpenseModal
           isOpen={true}
-          job_id={jobMongoId}
+          jobId={routeId}
           sales={sales}
           onClose={() => setShowExpenseModal(false)}
           onSave={(newExpense) => {
@@ -642,7 +700,6 @@ export default function JobForm() {
           workers={workers}
           existingData={currentExpense !== null ? expenses[currentExpense] : {}}
           displayNo={currentExpense !== null ? currentExpense + 1 : expenses.length + 1}
-          sales={sales}
           rates={fxRates}
         />
       )}

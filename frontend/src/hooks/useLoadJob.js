@@ -10,9 +10,7 @@ export default function useLoadJob(routeId, setters) {
     let alive = true;
     setLoaded(false);
 
-    const isNewJob = routeId && /^BN\d{8}-\d{6}$/.test(routeId);
-
-    if (!routeId || routeId === "new" || isNewJob) {
+    if (!routeId || routeId === "new") {
       if (alive) setLoaded(false);
       return;
     }
@@ -67,54 +65,65 @@ export default function useLoadJob(routeId, setters) {
           mp.rate_aed_to_eur != null ? String(mp.rate_aed_to_eur) : ""
         );
 
-        setters.setServiceDone?.(job.serviceDone ? isoToDDMMYYYY(job.serviceDone) : (job.delivery_date ? isoToDDMMYYYY(job.delivery_date) :""));
-        setters.setArchived?.(Boolean(job.archived));   
+        setters.setServiceDone?.(job.serviceDone ? isoToDDMMYYYY(job.serviceDone) : (job.delivery_date ? isoToDDMMYYYY(job.delivery_date) : ""));
+        setters.setArchived?.(Boolean(job.archived));
+        setters.setCreatedAt?.(mp.created_at ? isoToDDMMYYYY(mp.created_at) : "");
 
         // --- маппинг Expenses
         const mapExpense = (e = {}) => {
           const quantity = e.quantity != null ? Number(e.quantity) : 1;
-          const unit = e.unit_cost != null ? Number(e.unit_cost) : undefined;
+          const unit = e.unit_cost != null ? Number(e.unit_cost) : (e.unit_cost_origin != null ? Number(e.unit_cost_origin) : undefined);
           const dict = e.cost || {};
           const curFromCost = ("USD" in dict && "USD") || Object.keys(dict)[0];
           const amountFromCost = dict[curFromCost || ""] != null ? Number(dict[curFromCost]) : undefined;
-          const currency = (e.currency || curFromCost || "USD").toUpperCase();
+          const currency = (e.currency || e.currency_origin || curFromCost || "USD").toUpperCase();
           const unit_cost = unit != null ? unit : (amountFromCost != null ? amountFromCost : 0);
 
           return {
-            description: e.description || "",
+            _id: e._id,
+            description: e.description || e.cost_description || "",
             quantity: Number.isFinite(quantity) ? quantity : 0,
             unit_cost: Number.isFinite(unit_cost) ? unit_cost : 0,
             currency,
             seller: e.seller || "",
-            worker: (Array.isArray(e.workers) && e.workers[0]) || e.worker || "",
-            status: (e.status || "plan").toString().toLowerCase() === "fact" ? "fact" : "plan",
+            worker: (Array.isArray(e.workers) && e.workers[0]) || e.worker || e.worker_id || "",
+            status: (e.status || e.cost_status || "plan").toString().toLowerCase() === "fact" ? "fact" : "plan",
+            // critical: preserve sale_id and payment fields for re-save
+            sale_id: e.sale_id || "",
+            date_to_seller_payment: e.date_to_seller_payment || "",
+            payment_note: e.payment_note || "",
           };
         };
 
         // --- маппинг Sales
         const mapSale = (s = {}) => {
           const quantity = s.quantity != null ? Number(s.quantity) : undefined;
-          const up  = s.unit_price != null ? Number(s.unit_price) : undefined;
+          const up = s.unit_price != null ? Number(s.unit_price) : (s.unit_price_origin != null ? Number(s.unit_price_origin) : undefined);
           const dict = s.amount || {};
           const curFromAmount = ("USD" in dict && "USD") || Object.keys(dict)[0];
           const amountFromDict = dict[curFromAmount || ""] != null ? Number(dict[curFromAmount]) : undefined;
-          const currency = (s.currency || curFromAmount || "USD").toUpperCase();
+          const currency = (s.currency || s.currency_origin || curFromAmount || "USD").toUpperCase();
           const unit_price = up != null ? up : (amountFromDict != null ? amountFromDict : 0);
-          const qtyFinal   = quantity != null ? quantity : 1;
+          const qtyFinal = quantity != null ? quantity : 1;
 
           return {
+            _id: s._id,
             description: s.description || "",
             quantity: Number.isFinite(qtyFinal) ? qtyFinal : 0,
             unit_price: Number.isFinite(unit_price) ? unit_price : 0,
             currency,
-            worker: (Array.isArray(s.workers) && s.workers[0]) || s.worker || "",
-            status: (s.status || "plan").toString().toLowerCase() === "fact" ? "fact" : "plan",
+            worker: (Array.isArray(s.workers) && s.workers[0]) || s.worker || s.worker_id || "",
+            collaboration: s.collaboration || s.coworker_id || "",
+            date_client_payment: s.date_client_payment || "",
+            client_payment_note: s.client_payment_note || "",
+            rate_of_payment: s.rate_of_payment != null ? String(s.rate_of_payment) : "",
+            status: (s.status || s.sale_status || "plan").toString().toLowerCase() === "fact" ? "fact" : "plan",
           };
         };
 
         setters.setExpenses?.((job.expenses_part || []).map(mapExpense));
         setters.setSales?.((job.sales_part || []).map(mapSale));
-        if(alive) setLoaded(true);
+        if (alive) setLoaded(true);
 
       } catch (err) {
         console.error("Failed to load job", err);

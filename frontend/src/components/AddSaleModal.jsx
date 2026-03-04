@@ -15,7 +15,7 @@ export default function AddSaleModal({
   rates,
   jobId
 
-  }) {
+}) {
   const [formData, setFormData] = useState({});
   const [isEdited, setIsEdited] = useState(false);
   const [workersList, setWorkersList] = useState([]);
@@ -49,18 +49,20 @@ export default function AddSaleModal({
           }));
           setWorkersList(normalized);
         })
-        .catch(err => {console.error("Error loading workers", err);
-        setWorkersList([]);
-      });
+        .catch(err => {
+          console.error("Error loading workers", err);
+          setWorkersList([]);
+        });
     } else {
-    setWorkersList([]);
+      setWorkersList([]);
     }
   }, [isOpen]);
 
 
   // Open and load
   useEffect(() => {
-    setFormData({ ...existingData,
+    setFormData({
+      ...existingData,
       status: existingData.status || "plan"
     });
     setIsEdited(false);
@@ -79,7 +81,7 @@ export default function AddSaleModal({
       alert("Sale description is required!");
       return null;
     }
-  
+
     const quantity = parseInt(formData.quantity || 0, 10);
     const unit_price_origin = parseFloat(formData.unit_price || 0);
     const currency_origin = formData.currency || "USD";
@@ -93,18 +95,26 @@ export default function AddSaleModal({
       job_id: jobId,
       description: formData.description.trim(),
       quantity,
+      // API names
       unit_price_origin,
-      currency_origin: formData.currency || "USD",
+      currency_origin: formData.currency || "",
       amount_origin,
       amount_aed,
       worker_id: formData.worker || null,
       worker_name: mainWorker?.name || null,
+      coworker_id: formData.collaboration || null,
       coworker_name: coworker?.name || null,
       date_client_payment: formData.date_client_payment || null,
       client_payment_note: formData.client_payment_note?.trim() || null,
       rate_of_payment: parseFloat(formData.rate_of_payment || 0) || null,
       sale_status: formData.status || "plan",
       edit_date: new Date().toISOString(),
+      // form-internal aliases for re-edit
+      unit_price: unit_price_origin,
+      currency: formData.currency || "",
+      worker: formData.worker || "",
+      collaboration: formData.collaboration || "",
+      status: formData.status || "plan",
     };
   };
 
@@ -118,8 +128,13 @@ export default function AddSaleModal({
     console.log("Отправляем продажу в MongoDB:", payload);
 
     try {
-      await API.post("/sales", payload);
-      onSave(payload);
+      if (existingData._id) {
+        await API.put(`/sales/${existingData._id}`, payload);
+        onSave({ ...payload, _id: existingData._id, unit_price: payload.unit_price_origin, worker: payload.worker_id });
+      } else {
+        const res = await API.post("/sales", payload);
+        onSave({ ...payload, _id: res.data.sale_id, unit_price: payload.unit_price_origin, worker: payload.worker_id });
+      }
       onClose();
     } catch (err) {
       console.error("Ошибка сохранения продажи:", err.response?.data || err.message);
@@ -132,7 +147,7 @@ export default function AddSaleModal({
     if (isEdited) {
       if (confirm("Save changes before closing?")) {
         const payload = formSale();
-        if(!payload) return;
+        if (!payload) return;
 
         onSave(payload);
       }
@@ -147,130 +162,163 @@ export default function AddSaleModal({
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-no"># {displayNo}</div>
-        <h3 className="modal-title">Add Sale</h3>
+        <h3 className="modal-title">Sale</h3>
 
         <form onSubmit={handleSave}>
           <div className="modal-grid">
-
-            <input
-              placeholder="Sale description"
-              value={formData.description || ""}
-              onChange={(e) => handleChange("description", e.target.value)}
-            />
-
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                value={formData.description || ""}
+                onChange={(e) => handleChange("description", e.target.value)}
+              />
+              <label>Sale description</label>
+              <fieldset aria-hidden="true"><legend><span>Sale description</span></legend></fieldset>
+            </div>
             {/* Qty */}
-            <input
-              placeholder="Quantity"
-              type="number"
-              min="0"
-              step="1"
-              value={formData.quantity != null ? formData.quantity : ""}
-              onKeyDown={(e) => {
-                if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
-              }}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v === "") {
-                  handleChange("quantity", "");
-                  return;
-                }
-                const n = parseInt(v, 10);
-                handleChange("quantity", Number.isFinite(n) ? Math.max(0, n) : 0);
-              }}
-              onBlur={(e) => {
-                const n = parseInt(e.target.value, 10);
-                const cleaned = Number.isFinite(n) ? Math.max(0, n) : "";
-                e.target.value = String(cleaned);     // выравниваем видимое значение
-                handleChange("quantity", cleaned);
-              }}
-            
-            />
-
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                type="number"
+                min="0"
+                step="1"
+                value={formData.quantity != null ? formData.quantity : ""}
+                onKeyDown={(e) => {
+                  if (['-', '+', 'e', 'E', '.', ',', ' '].includes(e.key)) e.preventDefault();
+                }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "") {
+                    handleChange("quantity", "");
+                    return;
+                  }
+                  const n = parseInt(v, 10);
+                  handleChange("quantity", Number.isFinite(n) ? Math.max(0, n) : 0);
+                }}
+                onBlur={(e) => {
+                  const n = parseInt(e.target.value, 10);
+                  const cleaned = Number.isFinite(n) ? Math.max(0, n) : "";
+                  e.target.value = String(cleaned);     // выравниваем видимое значение
+                  handleChange("quantity", cleaned);
+                }}
+              />
+              <label>Quantity</label>
+              <fieldset aria-hidden="true"><legend><span>Quantity</span></legend></fieldset>
+            </div>
             {/* Unit Price */}
-            <input
-              placeholder="Unit Price"
-              type="text"
-              inputMode="decimal"
-              value={formData.unit_price ?? ""}
-              onKeyDown={onlyPositiveDecimal4}
-              onPaste={blockPaste}
-              onChange={decimal4Change((v) => handleChange("unit_price", v))}
-              onBlur={decimal4Blur((v) => handleChange("unit_price", v))}
-            />
-
+            <div className="floating-input-group">
+              <input
+                placeholder=" "
+                type="text"
+                inputMode="decimal"
+                value={formData.unit_price ?? ""}
+                onKeyDown={onlyPositiveDecimal4}
+                onPaste={blockPaste}
+                onChange={decimal4Change((v) => handleChange("unit_price", v))}
+                onBlur={decimal4Blur((v) => handleChange("unit_price", v))}
+              />
+              <label>Unit Price</label>
+              <fieldset aria-hidden="true"><legend><span>Unit Price</span></legend></fieldset>
+            </div>
             {/* Amount авто */}
-            <div>Amount: {amountStr}</div>
+            <div style={{ padding: "12px 14px", color: "#2dd4bf" }}>
+              Amount: {amountStr}{amountStr && formData.currency ? ` ${formData.currency}` : ""}
+            </div>
 
             {/* Currency */}
-            <select
-              value={formData.currency || "USD"}
-              onChange={(e) => handleChange("currency", e.target.value)}
-            >
-              <option value="USD">USD</option>
-              <option value="AED">AED</option>
-              <option value="RUB">RUB</option>
-              <option value="EUR">EUR</option>
-            </select>
+            <div className="floating-input-group">
+              <select
+                value={formData.currency || ""}
+                onChange={(e) => handleChange("currency", e.target.value)}
+              >
+                <option value=""></option>
+                <option value="USD">USD</option>
+                <option value="AED">AED</option>
+                <option value="RUB">RUB</option>
+                <option value="EUR">EUR</option>
+              </select>
+              <label>Currency</label>
+              <fieldset aria-hidden="true"><legend><span>Currency</span></legend></fieldset>
+            </div>
 
-            <div>Amount in AED: {amountAEDStr}</div>
-
+            <div style={{ padding: "12px 14px", color: "#2dd4bf" }}>Amount in AED: {amountAEDStr}</div>
             {/* Choose worker (main) */}
-            <select
-              value={formData.worker || ""}
-              onChange={(e) => handleChange("worker", e.target.value)}
-            >
-              <option value="">Choose worker</option>
-              {workersList.map(w => (
-                <option key={w.id} value={w.id}>
-                  {w.name} {w.role ? `(${w.field})` : ""}
-                </option>
-              ))}
-            </select>
+            <div className="floating-input-group">
+              <select
+                value={formData.worker || ""}
+                onChange={(e) => handleChange("worker", e.target.value)}
+              >
+                <option value=""></option>
+                {workersList.map(w => (
+                  <option key={w.id} value={w.id}>
+                    {w.name} {w.role ? `(${w.field})` : ""}
+                  </option>
+                ))}
+              </select>
+              <label>Choose worker</label>
+              <fieldset aria-hidden="true"><legend><span>Choose worker</span></legend></fieldset>
+            </div>
 
             {/* в DB, не на Job form */}
 
             {/* Date of client payment */}
-            <input
-              type={formData.date_client_payment ? "date" : "text"}
-              placeholder="Date of client payment"
-              value={formData.date_client_payment || ""}
-              onFocus={(e) => (e.target.type = "date")}
-              onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-              onChange={(e) => handleChange("date_client_payment", e.target.value)}
-            />
+            <div className="floating-input-group">
+              <input
+                type={formData.date_client_payment ? "date" : "text"}
+                placeholder=" "
+                value={formData.date_client_payment || ""}
+                onFocus={(e) => (e.target.type = "date")}
+                onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+                onChange={(e) => handleChange("date_client_payment", e.target.value)}
+              />
+              <label>Date of client payment</label>
+              <fieldset aria-hidden="true"><legend><span>Date of client payment</span></legend></fieldset>
+            </div>
 
             {/* Client payment note */}
-            <textarea
-              placeholder="Client payment note"
-              rows={2}
-              value={formData.client_payment_note || ""}
-              onChange={(e) => handleChange("client_payment_note", e.target.value)}
-            />
+            <div className="floating-input-group">
+              <textarea
+                placeholder=" "
+                rows={2}
+                value={formData.client_payment_note || ""}
+                onChange={(e) => handleChange("client_payment_note", e.target.value)}
+              />
+              <label>Client payment note</label>
+              <fieldset aria-hidden="true"><legend><span>Client payment note</span></legend></fieldset>
+            </div>
 
             {/* Rate of payment (валидация currency rate) */}
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="Rate of payment"
-              value={formData.rate_of_payment || ""}
-              onKeyDown={onlyPositiveDecimal4}
-              onPaste={blockPaste}
-              onChange={decimal4Change((v) => handleChange("rate_of_payment", v))}
-              onBlur={decimal4Blur((v) => handleChange("rate_of_payment", v))}
-            />
+            <div className="floating-input-group">
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder=" "
+                value={formData.rate_of_payment || ""}
+                onKeyDown={onlyPositiveDecimal4}
+                onPaste={blockPaste}
+                onChange={decimal4Change((v) => handleChange("rate_of_payment", v))}
+                onBlur={decimal4Blur((v) => handleChange("rate_of_payment", v))}
+              />
+              <label>Rate of payment</label>
+              <fieldset aria-hidden="true"><legend><span>Rate of payment</span></legend></fieldset>
+            </div>
 
             {/* Collaboration */}
-            <select
-              value={formData.collaboration || ""}
-              onChange={(e) => handleChange("collaboration", e.target.value)}
-            >
-              <option value="">Choose coworker</option>
-              {workersList.map(w => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
+            <div className="floating-input-group">
+              <select
+                value={formData.collaboration || ""}
+                onChange={(e) => handleChange("collaboration", e.target.value)}
+              >
+                <option value=""></option>
+                {workersList.map(w => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
+              <label>Choose coworker</label>
+              <fieldset aria-hidden="true"><legend><span>Choose coworker</span></legend></fieldset>
+            </div>
           </div>
 
           <div className="modal-footer">
@@ -284,11 +332,11 @@ export default function AddSaleModal({
             value={formData.status === "plan"}
             onChange={(newValue) => handleChange("status", newValue ? "plan" : "fact")} />
           <div className="date-text">
-          {new Date().toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-          })}
+            {new Date().toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric"
+            })}
           </div>
         </div>
       </div>

@@ -87,20 +87,27 @@ export default function ClientSelect({
   }, [active, open]);
 
   return (
-    <div ref={wrapRef} style={{ position: "relative", overflow: "visible" }}>
-      <input
-        className="bg-gray-700 p-2 rounded w-full"
-        placeholder={placeholder}
+    <div ref={wrapRef} className="floating-input-group" style={{ overflow: "visible", marginBottom: 0 }}>
+      <textarea
+        rows={1}
+        placeholder=" "
         value={query}
         onFocus={() => setOpen(true)}
         onClick={() => setOpen(true)}  // открыть даже если пусто
         onKeyDown={onKeyDown}
+        onInput={(e) => {
+          e.target.style.height = "auto";
+          e.target.style.height = e.target.scrollHeight + "px";
+        }}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
           setActive(-1);
         }}
+        style={{ width: "100%", margin: 0, resize: "none", overflow: "hidden" }}
       />
+      <label>{placeholder}</label>
+      <fieldset aria-hidden="true"><legend><span>{placeholder}</span></legend></fieldset>
       {open && items.length > 0 && (
         <ul
           ref={listRef}

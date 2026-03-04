@@ -5,7 +5,8 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.4);
+  /* Made overlay less dark so transparency is visible */
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -14,7 +15,10 @@
 
 /* Основное окно */
 .modal-content {
-  background: linear-gradient(to bottom right, #2a2a2a, #1a1a1a);
+  background: rgba(15, 31, 31, 0.75);
+  /* 85% transparent dark greenish-black */
+  backdrop-filter: blur(8px);
+  /* Adding a blur effect to make it look nicer when transparent */
   color: white;
   padding: 24px;
   border-radius: 12px;
@@ -34,7 +38,7 @@
   color: white;
 }
 
-.modal-no{
+.modal-no {
   position: absolute;
   top: 12px;
   left: 16px;
@@ -49,18 +53,21 @@
 .modal-grid {
   display: grid;
   gap: 10px;
-  grid-template-columns: 1fr; /* по умолчанию 1 колонка */
+  grid-template-columns: 1fr;
+  /* по умолчанию 1 колонка */
 }
 
 @media (min-width: 768px) {
   .modal-grid {
-    grid-template-columns: 1fr 1fr; /* на широких экранах — 2 колонки */
+    grid-template-columns: 1fr 1fr;
+    /* на широких экранах — 2 колонки */
   }
 }
 
 /* Поля ввода и селекты */
-.modal-grid input,
-.modal-grid select {
+.modal-grid input:not(.floating-input-group input),
+.modal-grid select:not(.floating-input-group select),
+.modal-grid textarea:not(.floating-input-group textarea) {
   background-color: #1a1a1a;
   color: #fff;
   border: 1px solid #444;
@@ -69,6 +76,19 @@
   font-size: 14px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.modal-grid textarea {
+  background-color: transparent !important;
+  color: #fff;
+  border: none !important;
+  padding: 14px 14px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  outline: none;
+  z-index: 1;
 }
 
 .modal-grid input::placeholder {
@@ -114,10 +134,11 @@
   gap: 6px;
 }
 
-.modal-date .date-text{
+.modal-date .date-text {
   font-size: 12px;
   color: #777;
-  text-align: right;        /* страховка */
+  text-align: right;
+  /* страховка */
 }
 
 /* Анимация появления */
@@ -126,6 +147,7 @@
     transform: scale(0.95);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;

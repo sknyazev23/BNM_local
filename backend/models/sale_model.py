@@ -15,6 +15,7 @@ class SaleItem(BaseModel):
     worker_id: Optional[str] = None
     date_client_payment: Optional[str] = None
     rate_of_payment: Optional[float] = None
+    coworker_id: Optional[str] = None
     coworker_name: Optional[str] = None
     client_payment_note: Optional[str] = None
     

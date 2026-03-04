@@ -36,11 +36,8 @@ export function buildJobApiData(raw, { serviceDone, archived }) {
 
 
 
-  const expenses_part = (raw.expenses || []).map((e) => {
-    if (!e.sale_id) {
-      throw new Error("Каждая расходная запись должна быть привязана к sale_id");
-    }
-    
+  const expenses_part = (raw.expenses || []).filter(e => !!e.sale_id).map((e) => {
+
     const quantity = Number(e.quantity ?? 0);
     const unit = Number(e.unit_cost ?? 0);
     const currency = (e.currency || "USD").toUpperCase();
