@@ -19,5 +19,9 @@ class SaleItem(BaseModel):
     coworker_name: Optional[str] = None
     client_payment_note: Optional[str] = None
     
+    profit_rate: Optional[float] = None
+    worker_profit: float = 0.0
+    coworker_profit: float = 0.0
+
     sale_status: str = "plan"
     edit_date: Optional[str] = None

@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import useDraggableModal from "../hooks/useDraggableModal";
 import "../styles/modal.css";
 
 export default function EditClientModal({ initialClient, onSave, onClose }) {
+  const { overlayProps, panelProps } = useDraggableModal();
   const [name, setName] = useState("");
+  // ... (rest of the fields)
   const [vat, setVat] = useState("");
   const [contactPerson, setContactPerson] = useState("");
   const [phone, setPhone] = useState("");
@@ -81,8 +84,8 @@ export default function EditClientModal({ initialClient, onSave, onClose }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div className="modal-overlay" {...overlayProps}>
+      <div className="modal-content" {...panelProps}>
         <h3 className="modal-title">Edit Client</h3>
 
         <div className="modal-grid">

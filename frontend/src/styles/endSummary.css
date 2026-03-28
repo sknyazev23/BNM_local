@@ -112,3 +112,10 @@
   width: auto;
   min-width: 180px;
 }
+
+/* Выделение блока Profit (рассчитанного через profit_rate) */
+.end-summary .sum-profit-highlight {
+  color: #2dd4bf;
+  font-weight: 600;
+  margin-left: 8px;
+}

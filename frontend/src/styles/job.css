@@ -3,7 +3,7 @@ html {
 }
 
 body {
-  background: linear-gradient(to bottom, #134E5E, #71B280);
+  background: linear-gradient(to bottom, #0a8486, #3be8eb);
   background-attachment: fixed;
   background-size: cover;
   color: #ffffff;
@@ -24,7 +24,13 @@ body {
   background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
   overflow: visible;
-  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    2px 4px 5.3px rgba(0, 0, 0, 0.08),
+    5.4px 10.9px 12.6px rgba(0, 0, 0, 0.11),
+    11.4px 23.2px 23.8px rgba(0, 0, 0, 0.14),
+    23.2px 47.1px 42.4px rgba(0, 0, 0, 0.17),
+    43.4px 88.1px 79.4px rgba(0, 0, 0, 0.2),
+    90px 182px 160px rgba(0, 0, 0, 0.25);
 }
 
 h2,
@@ -45,10 +51,12 @@ textarea {
   color: #ffffff;
   border: 1px solid #555;
   border-radius: 8px;
-  padding: 8px;
+  padding: 6px 14px;
   width: 100%;
   box-sizing: border-box;
   margin-bottom: 3px;
+  font-size: 17px;
+  text-align: right;
 }
 
 input::placeholder {
@@ -73,10 +81,11 @@ input::placeholder {
   background-color: transparent !important;
   color: #ffffff;
   border: none !important;
-  padding: 14px 14px;
+  padding: 11px 14px;
   /* Sufficient padding so text drops below label */
   box-sizing: border-box;
-  font-size: 14px;
+  font-size: 17px;
+  text-align: right;
   margin: 0;
   outline: none;
   z-index: 1;
@@ -209,7 +218,6 @@ section {
 
 .bn-btn:hover {
   background-color: #09605f;
-  background-color: #2dd4bf;
   transform: scale(1.08);
 }
 
@@ -305,12 +313,14 @@ textarea {
 
 .expense-card-row {
   display: grid;
-  grid-template-columns: 30px 150px 30px 120px 120px 100px 140px 150px 150px 80px;
-  align-items: center;
-  gap: 1px;
+  grid-template-columns: 30px 1fr 30px 100px 100px 60px 110px 140px 100px 68px;
+  align-items: stretch;
+  gap: 8px;
+  /* Sync with header */
+  box-sizing: border-box;
 
-  padding: 4px 8px;
-  margin: 6px 0;
+  padding: 2px 8px 2px 8px !important;
+  margin: 4px 0;
   background: transparent;
   border: 1px solid #2dd4bf44;
   border-radius: 8px;
@@ -326,23 +336,48 @@ textarea {
 
 /* ячейки */
 .ex-cell {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #e6e6e6;
   font-size: 14px;
-  text-align: center;
-  padding: 0 4px;
-  border-right: 1px solid rgba(45, 212, 191, 0.15);
+  padding: 0 8px;
+  min-height: 30px;
+  position: relative;
+  min-width: 0;
+  /* Critical for ellipsis in flex */
 }
 
-.ex-cell:last-of-type {
-  border-right: none;
+.ex-cell::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 6px;
+  /* centered vertically (30px - 18px / 2) */
+  height: 18px;
+  width: 1px;
+  background-color: rgba(45, 212, 191, 0.12);
+}
+
+.ex-actions-col::after {
+  display: none;
 }
 
 .ex-cell.desc {
+  justify-content: flex-start;
   text-align: left;
 }
+
+.decimal-small {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
 
 /* описание — слева */
 .ex-cell.num {
@@ -355,10 +390,9 @@ textarea {
   border: 1px solid #ffffff33;
   background: transparent;
   color: #2dd4bf;
-  padding: 3px 3px;
+  padding: 3px 6px;
   border-radius: 8px;
   cursor: pointer;
-  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -393,11 +427,11 @@ textarea {
 .ex-actions-col {
   display: flex;
   flex-direction: row;
-  align-items: center;
   justify-content: flex-end;
-  gap: 4px;
-  padding: 2px 6px 2px 0;
+  gap: 8px;
+  padding: 2px 0;
 }
+
 
 /* Панель над списком расходов (суммы + кнопка) */
 .exp-toolbar {
@@ -483,16 +517,54 @@ textarea {
 }
 
 .s-date {
-  width: 12ch;
+  width: 180px;
   border-radius: 6px;
   text-align: center;
   opacity: .9;
-
 }
 
+.s-date input {
+  background-color: #1f3f3f;
+  width: 100%;
+}
+
+.s-date input::-webkit-datetime-edit {
+  padding-right: 25px; /* Увеличиваем расстояние от текста до календарика */
+}
+
+.s-date input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+
 .toggle input {
-  width: 18px;
-  height: 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: 1.5px solid #2dd4bf;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+  outline: none;
+}
+.toggle input:checked {
+  background-color: #2dd4bf;
+}
+.toggle input:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #0f3a3b;
+  font-size: 11px;
+  font-weight: bold;
 }
 
 /* общая стилизация кнопок внизу */

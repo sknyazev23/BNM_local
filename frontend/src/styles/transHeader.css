@@ -1,8 +1,10 @@
 .transaction-table {
   display: grid;
-  grid-template-columns: 30px 150px 30px 120px 120px 100px 140px 150px 150px 80px;
-  align-items: center;
-  gap: 4px;
+  grid-template-columns: 30px 1fr 30px 100px 100px 60px 110px 140px 100px 68px;
+  align-items: stretch;
+  gap: 8px;
+  padding: 0 8px 0 8px !important; /* Sync with .expense-card-row */
+  box-sizing: border-box;
 }
 
 .transaction-header {
@@ -12,18 +14,25 @@
   padding: 6px 4px;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
-  min-height: 32px; 
-  color:#0e2528
+  align-items: center;
+  min-height: 40px; 
+  font-size: 13px;
+  color:#0e2528;
 }
 
-.transaction-cell {
-  text-align: center;
-  padding: 6px 4px;
+.transaction-header:last-child {
+  border-right: none; /* Just in case, will be empty anyway */
 }
 
 .transaction-actions {
   display: flex;
-  justify-content: center;
-  gap: 1px;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 0;
 }
+
+
+.transaction-header.desc {
+  justify-content: flex-start;
+}
+

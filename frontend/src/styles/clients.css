@@ -9,12 +9,12 @@
   --accent-strong: #0f766e;
   --border: rgba(0, 0, 0, 0.12);
 
-  --header-h: 72px;
+  --header-h: 60px;
   --pad-x: 24px;
 
-  --row-radius: 14px;
+  --row-radius: 8px;
   --row-bw: 1px;
-  --grid-minw: 1800px;
+  --grid-minw: 100%;
   /* минимальная ширина таблицы (для горизонтального скролла) */
 }
 
@@ -112,7 +112,7 @@ body {
   top: 0;
   z-index: 10;
   background: var(--panel);
-  padding: 12px 16px;
+  padding: 8px 16px;
   background: transparent;
   border-bottom: none;
   margin-left: 0;
@@ -121,21 +121,21 @@ body {
   grid-template-columns:
     minmax(40px, .4fr)
     /* # */
-    minmax(140px, 1.2fr)
+    minmax(120px, 1.2fr)
     /* NAME */
-    minmax(100px, .9fr)
+    minmax(80px, .9fr)
     /* VAT */
-    minmax(140px, 1.1fr)
+    minmax(120px, 1.1fr)
     /* CONTACT PERSON */
-    minmax(120px, 1fr)
+    minmax(110px, 1fr)
     /* PHONE */
-    minmax(160px, 1.2fr)
+    minmax(140px, 1.2fr)
     /* E_MAIL */
-    minmax(120px, 1fr)
+    minmax(100px, 1fr)
     /* COUNTRY */
-    minmax(220px, 1.4fr)
+    minmax(160px, 1.4fr)
     /* NOTE */
-    minmax(96px, .7fr);
+    minmax(90px, .7fr);
   /* ACTIONS */
   column-gap: 0;
   font-weight: 700;
@@ -169,12 +169,12 @@ body {
 .client-row {
   display: grid;
   grid-template-columns:
-    minmax(40px, .4fr) minmax(140px, 1.2fr) minmax(100px, .9fr) minmax(140px, 1.1fr) minmax(120px, 1fr) minmax(160px, 1.2fr) minmax(120px, 1fr) minmax(220px, 1.4fr) minmax(96px, .7fr);
+    minmax(40px, .4fr) minmax(120px, 1.2fr) minmax(80px, .9fr) minmax(120px, 1.1fr) minmax(110px, 1fr) minmax(140px, 1.2fr) minmax(100px, 1fr) minmax(160px, 1.4fr) minmax(90px, .7fr);
   column-gap: 12px;
 
   align-items: center;
-  padding: 4px 8px;
-  margin: 6px 0;
+  padding: 2px 8px;
+  margin: 2px 0;
   /* расстояние между карточками */
   background: var(--panel);
   border: var(--row-bw) solid var(--border);
@@ -201,8 +201,7 @@ body {
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
   text-align: center;
 }
 

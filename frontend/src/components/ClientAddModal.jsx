@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import useDraggableModal from '../hooks/useDraggableModal';
 import '../styles/modal.css';
 
 export default function ClientAddModal({ onClose, onAddClient }) {
+  const { overlayProps, panelProps } = useDraggableModal();
   const [name, setName] = useState('');
+// ... (rest of fields)
   const [vat, setVat] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
@@ -32,8 +35,8 @@ export default function ClientAddModal({ onClose, onAddClient }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div className="modal-overlay" {...overlayProps}>
+      <div className="modal-content" {...panelProps}>
         <h3 className="modal-title">Add Client</h3>
 
         <div className="modal-grid">

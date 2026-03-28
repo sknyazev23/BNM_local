@@ -4,6 +4,7 @@ import { toAED } from "../utils/currency";
 import { format4 } from "../utils/numberFormat";
 import { onlyPositiveDecimal4, blockPaste, decimal4Change, decimal4Blur } from "../utils/numberValidation";
 import PlanFactToggle from "./PlanFactToggle";
+import useDraggableModal from "../hooks/useDraggableModal";
 import "../styles/modal.css";
 
 export default function AddSaleModal({
@@ -63,7 +64,7 @@ export default function AddSaleModal({
   useEffect(() => {
     setFormData({
       ...existingData,
-      status: existingData.status || "plan"
+      status: existingData.status || existingData.sale_status || "plan"
     });
     setIsEdited(false);
   }, [existingData, isOpen]);
@@ -84,6 +85,12 @@ export default function AddSaleModal({
 
     const quantity = parseInt(formData.quantity || 0, 10);
     const unit_price_origin = parseFloat(formData.unit_price || 0);
+
+    if (unit_price_origin > 0 && !formData.currency?.trim()) {
+      alert("Currency is required when a price per unit is specified!");
+      return null;
+    }
+
     const currency_origin = formData.currency || "USD";
     const amount_origin = quantity * unit_price_origin;
     const amount_aed = toAED(amount_origin, currency_origin, rates);
@@ -104,6 +111,7 @@ export default function AddSaleModal({
       worker_name: mainWorker?.name || null,
       coworker_id: formData.collaboration || null,
       coworker_name: coworker?.name || null,
+      profit_rate: formData.profit_rate ? parseFloat(formData.profit_rate) : null,
       date_client_payment: formData.date_client_payment || null,
       client_payment_note: formData.client_payment_note?.trim() || null,
       rate_of_payment: parseFloat(formData.rate_of_payment || 0) || null,
@@ -114,6 +122,7 @@ export default function AddSaleModal({
       currency: formData.currency || "",
       worker: formData.worker || "",
       collaboration: formData.collaboration || "",
+      profit_rate: formData.profit_rate || "",
       status: formData.status || "plan",
     };
   };
@@ -128,13 +137,29 @@ export default function AddSaleModal({
     console.log("Отправляем продажу в MongoDB:", payload);
 
     try {
+      let saleId;
       if (existingData._id) {
         await API.put(`/sales/${existingData._id}`, payload);
-        onSave({ ...payload, _id: existingData._id, unit_price: payload.unit_price_origin, worker: payload.worker_id });
+        saleId = existingData._id;
       } else {
         const res = await API.post("/sales", payload);
-        onSave({ ...payload, _id: res.data.sale_id, unit_price: payload.unit_price_origin, worker: payload.worker_id });
+        saleId = res.data.sale_id;
       }
+      // Re-fetch to get backend-calculated worker_profit / coworker_profit
+      const fresh = await API.get(`/sales/${saleId}`);
+      const s = fresh.data;
+      onSave({
+        ...payload,
+        _id: saleId,
+        unit_price: payload.unit_price_origin,
+        currency: payload.currency_origin,
+        worker: payload.worker_id,
+        worker_profit: s.worker_profit ?? 0,
+        coworker_profit: s.coworker_profit ?? 0,
+        profit_rate: s.profit_rate ?? payload.profit_rate,
+        coworker_id: payload.coworker_id,
+        coworker_name: payload.coworker_name,
+      });
       onClose();
     } catch (err) {
       console.error("Ошибка сохранения продажи:", err.response?.data || err.message);
@@ -156,11 +181,13 @@ export default function AddSaleModal({
   };
 
 
+  const { overlayProps, panelProps } = useDraggableModal();
+
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div className="modal-overlay" {...overlayProps}>
+      <div className="modal-content" {...panelProps}>
         <div className="modal-no"># {displayNo}</div>
         <h3 className="modal-title">Sale</h3>
 
@@ -318,6 +345,23 @@ export default function AddSaleModal({
               </select>
               <label>Choose coworker</label>
               <fieldset aria-hidden="true"><legend><span>Choose coworker</span></legend></fieldset>
+            </div>
+
+            {/* Profit rate */}
+            <div className="floating-input-group">
+              <select
+                value={formData.profit_rate || ""}
+                onChange={(e) => handleChange("profit_rate", e.target.value)}
+              >
+                <option value=""></option>
+                <option value="5">5%</option>
+                <option value="10">10%</option>
+                <option value="15">15%</option>
+                <option value="30">30%</option>
+                <option value="50">50%</option>
+              </select>
+              <label>Profit rate</label>
+              <fieldset aria-hidden="true"><legend><span>Profit rate</span></legend></fieldset>
             </div>
           </div>
 

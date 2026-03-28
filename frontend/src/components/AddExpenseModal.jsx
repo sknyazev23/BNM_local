@@ -5,6 +5,7 @@ import "../styles/planFact.css";
 import { format4 } from "../utils/numberFormat";
 import { toAED } from "../utils/currency";
 import PlanFactToggle from "./PlanFactToggle";
+import useDraggableModal from "../hooks/useDraggableModal";
 
 export default function AddExpenseModal({ isOpen, onClose, onSave, existingData = {}, displayNo, rates, jobId }) {
   const [sales, setSales] = useState([]);
@@ -50,6 +51,12 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
 
     const quantity = parseInt(formData.quantity || 0, 10);
     const unit_cost_origin = parseFloat(formData.unit_cost || 0);
+
+    if (unit_cost_origin > 0 && !formData.currency?.trim()) {
+      alert("Currency is required when a cost per unit is specified!");
+      return null;
+    }
+
     const currency_origin = formData.currency || "USD";
     const amount_origin = quantity * unit_cost_origin;
     const amount_aed = toAED(amount_origin, currency_origin, rates);
@@ -177,12 +184,12 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
       if (existingData._id) {
         res = await API.put(`/expenses/${existingData._id}`, payload);
         if (onSave) {
-          onSave({ ...payload, _id: existingData._id, unit_cost: payload.unit_cost_origin, description: payload.cost_description, worker: payload.worker_id });
+          onSave({ ...payload, _id: existingData._id, unit_cost: payload.unit_cost_origin, currency: payload.currency_origin, description: payload.cost_description, worker: payload.worker_id });
         }
       } else {
         res = await API.post("/expenses", payload);
         if (onSave) {
-          onSave({ ...payload, _id: res.data.expense_id, unit_cost: payload.unit_cost_origin, description: payload.cost_description, worker: payload.worker_id });
+          onSave({ ...payload, _id: res.data.expense_id, unit_cost: payload.unit_cost_origin, currency: payload.currency_origin, description: payload.cost_description, worker: payload.worker_id });
         }
       }
       setIsEdited(false);
@@ -206,11 +213,13 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, existingData 
     onClose();
   };
 
+  const { overlayProps, panelProps } = useDraggableModal();
+
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div className="modal-overlay" {...overlayProps}>
+      <div className="modal-content" {...panelProps}>
         <div className="modal-no"># {displayNo}</div>
         <h3 className="modal-title">Expense</h3>
 

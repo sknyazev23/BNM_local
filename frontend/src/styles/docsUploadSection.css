@@ -13,16 +13,16 @@
   gap:10px;
   margin:6px 0;
   padding:6px 10px;
-  border:1px solid #2dd4bf;
   border-radius:9999px;              /* pill shape */
   width:fit-content;                 /* ширина по контенту */
   background:transparent;
   color:#fff;
   transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
+  cursor: pointer;
+  user-select: none;
 }
 .doc-label:hover{
   background:rgba(45,212,191,.08);
-  box-shadow:0 0 0 2px rgba(45,212,191,.14);
 }
 
 /* Нумерация */

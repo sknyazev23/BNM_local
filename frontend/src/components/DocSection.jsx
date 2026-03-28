@@ -29,10 +29,23 @@ export default function DocSection({ jobId }) {
         ) : (
           <>
             {docs.map((d, i) => (
-              <div className="doc-label" key={d.id || d._id || d.name || i}>
+              <div 
+                className="doc-label" 
+                key={d.id || d._id || d.name || i}
+                onDoubleClick={async () => {
+                  try {
+                    const docId = d.id || d._id;
+                    if (docId) {
+                      await API.get(`/documents/open/${docId}`);
+                    }
+                  } catch (e) {
+                    console.error("Failed to open document", e);
+                  }
+                }}
+                title="Double click to open file"
+              >
                 <span className="doc-idx">{i + 1}.</span>
                 <span className="doc-name">{d.name}</span>
-                <span className="doc-count">{Number(d.count ?? 0)}</span>
               </div>
             ))}
             <div className="doc-total">Total {totalCount} documents</div>

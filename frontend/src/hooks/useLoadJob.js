@@ -114,9 +114,13 @@ export default function useLoadJob(routeId, setters) {
             currency,
             worker: (Array.isArray(s.workers) && s.workers[0]) || s.worker || s.worker_id || "",
             collaboration: s.collaboration || s.coworker_id || "",
+            coworker_id: s.coworker_id || s.collaboration || "",
             date_client_payment: s.date_client_payment || "",
             client_payment_note: s.client_payment_note || "",
             rate_of_payment: s.rate_of_payment != null ? String(s.rate_of_payment) : "",
+            profit_rate: s.profit_rate != null ? String(s.profit_rate) : "",
+            worker_profit: s.worker_profit != null ? Number(s.worker_profit) : 0,
+            coworker_profit: s.coworker_profit != null ? Number(s.coworker_profit) : 0,
             status: (s.status || s.sale_status || "plan").toString().toLowerCase() === "fact" ? "fact" : "plan",
           };
         };

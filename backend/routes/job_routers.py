@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, UploadFile, Form, File
+from typing import Optional
 from pymongo.errors import DuplicateKeyError
 from models.job_model import Job
 from config import jobs_collection, sales_collection, expenses_collection, documents_collection, workers_collection
@@ -6,89 +7,9 @@ from bson import ObjectId
 from collections import Counter
 from datetime import datetime
 from typing import List, Dict, Any
+from utils.job_calc import recalc_job_summary
 
 router = APIRouter()
-
-def _recalc_job_summary(job_id: str):
-    job = jobs_collection.find_one({"_id": job_id}, {"main_part": 1}) or {}
-    mp = job.get("main_part") or {}
-
-    # курсы
-    rate_aed = float(str(mp.get("rate_aed_to_usd") or "3.67"))
-    rr = mp.get("rate_rub_to_usd")
-    rate_rub = float(str(rr)) if rr not in (None, "",) else None
-
-    def to_usd(val, cur):
-        cur = (cur or "USD").upper()
-        v = float(val or 0)
-        if cur == "USD": return v
-        if cur == "AED": return v / (rate_aed or 3.67)
-        if cur == "RUB" and rate_rub: return v / rate_rub
-        return 0.0
-
-    # дочерние документы
-    sales = list(sales_collection.find({"job_id": job_id}, {"_id": 1, "amount": 1, "workers": 1, "worker_id": 1, "coworker_id": 1}))
-    exps  = list(expenses_collection.find({"job_id": job_id}, {"_id": 1, "quantity":1,"unit_cost":1,"currency":1,"cost":1,"workers":1,"worker_id":1}))
-
-    # profit_usd
-    sales_usd = 0.0
-    for s in sales:
-        for cur, val in (s.get("amount") or {}).items():
-            sales_usd += to_usd(val, cur)
-
-    exp_usd = 0.0
-    for e in exps:
-        cost = e.get("cost") or {}
-        if cost:
-            for cur, val in cost.items():
-                exp_usd += to_usd(val, cur)
-        else:
-            quantity = float(e.get("quantity") or 0)
-            unit_cost = float(e.get("unit_cost") or 0)
-            exp_usd += to_usd((quantity * unit_cost), str(e.get("currency") or "USD"))
-    profit_usd = round(float(sales_usd - exp_usd), 2)
-
-    # workers: имена (основной + ко-воркеры), порядок по частоте
-    ids = []
-    for doc_list in [sales, exps]:
-        for doc in doc_list:
-            # array of workers if provided
-            for w in (doc.get("workers") or []):
-                ids.append(str(w))
-            # single worker_id if provided
-            w_id = doc.get("worker_id")
-            if w_id and str(w_id).strip():
-                ids.append(str(w_id))
-            # single coworker_id if provided (usually in sales)
-            cw_id = doc.get("coworker_id")
-            if cw_id and str(cw_id).strip():
-                ids.append(str(cw_id))
-
-    names: List[str] = []
-    if ids:
-        uniq = [ObjectId(x) for x in set(ids) if ObjectId.is_valid(x)]
-        name_by_id: Dict[str, str] = {}
-        if uniq:
-            for w in workers_collection.find({"_id": {"$in": uniq}}, {"name": 1}):
-                name_by_id[str(w["_id"])] = str(w.get("name") or str(w["_id"]))
-        freq = Counter(ids)
-        order = sorted(freq.keys(), key=lambda x: (-freq[x], name_by_id.get(x, x)))
-        names = [str(name_by_id.get(x, x)) for x in order]
-
-    # collect _id references for denormalised arrays
-    sales_ids = [str(s["_id"]) for s in sales]
-    expenses_ids = [str(e["_id"]) for e in exps]
-
-    jobs_collection.update_one(
-        {"_id": job_id},
-        {"$set": {
-            "profit_usd": profit_usd,
-            "workers": names,
-            "sales_part": sales_ids,
-            "expenses_part": expenses_ids,
-        }}
-    )
-
 
 def _normalize(o):
     if isinstance(o, ObjectId):
@@ -144,7 +65,7 @@ def create_job(job: Job = Body(...)):
         )
 
     # 3) Пересчёт profit_usd, workers и т.п.
-    _recalc_job_summary(job_id)
+    recalc_job_summary(job_id)
 
     return {"_id": job_id}
 
@@ -233,7 +154,7 @@ def update_job(job_id: str, payload: dict = Body(...)):
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    _recalc_job_summary(job_id)
+    recalc_job_summary(job_id)
     return {"message": "Job updated successfully", "_id": job_id}
 
 
@@ -249,3 +170,94 @@ def delete_job(job_id: str):
     documents_collection.delete_many({"job_id": job_id})
 
     return {"message": "Job deleted successfully"}
+
+
+@router.post("/bulk-delete")
+def bulk_delete_jobs(job_ids: list[str]):
+    if not job_ids:
+        return {"message": "No jobs provided"}
+    
+    # Cascade delete for all selected jobs
+    jobs_collection.delete_many({"_id": {"$in": job_ids}})
+    sales_collection.delete_many({"job_id": {"$in": job_ids}})
+    expenses_collection.delete_many({"job_id": {"$in": job_ids}})
+    documents_collection.delete_many({"job_id": {"$in": job_ids}})
+    
+    return {"message": f"Successfully deleted {len(job_ids)} jobs and their associated data"}
+
+
+# ====================== DOCUMENTS ======================
+
+BASE_DOCS_DIR = None
+
+def _get_base_dir():
+    from pathlib import Path
+    d = Path.home() / "Documents" / "BN" / "JobFiles"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+@router.get("/{job_id}/documents")
+def get_job_documents(job_id: str):
+    """Вернуть список документов для джоба, сгруппированных по имени."""
+    cursor = documents_collection.find(
+        {"job_id": job_id},
+        {"_id": 1, "name": 1, "upload_date": 1, "path": 1}
+    )
+    docs = []
+    for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        docs.append(doc)
+
+    # группируем по name, чтобы вернуть {name, count, id, path}
+    docs_by_name = {}
+    for d in docs:
+        if d["name"] not in docs_by_name:
+            docs_by_name[d["name"]] = {"count": 0, "path": d.get("path"), "id": d["_id"]}
+        docs_by_name[d["name"]]["count"] += 1
+        
+    result = []
+    for n, data in docs_by_name.items():
+        result.append({
+            "name": n,
+            "count": data["count"],
+            "id": data["id"],
+            "path": data["path"]
+        })
+    return result
+
+
+@router.post("/{job_id}/documents")
+def upload_job_document(
+    job_id: str,
+    name: str = Form(...),
+    files: List[UploadFile] = File(...)
+):
+    """Загрузить один или несколько файлов, привязанных к джобу."""
+    if not files:
+        raise HTTPException(400, "At least one file is required")
+
+    base_dir = _get_base_dir()
+    job_folder = base_dir / job_id
+    job_folder.mkdir(parents=True, exist_ok=True)
+
+    from datetime import timezone
+    inserted = []
+    for f in files:
+        content = f.file.read()
+        file_path = job_folder / f.filename
+        with open(file_path, "wb") as out:
+            out.write(content)
+
+        doc = {
+            "job_id": job_id,
+            "name": name.strip() or f.filename,
+            "original_filename": f.filename,
+            "upload_date": datetime.now(timezone.utc),
+            "path": str(file_path),
+        }
+        result = documents_collection.insert_one(doc)
+        inserted.append(str(result.inserted_id))
+
+    return {"message": "Uploaded", "count": len(inserted), "ids": inserted}
+

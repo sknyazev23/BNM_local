@@ -76,3 +76,25 @@ def list_documents(job_id: str):
         doc["_id"] = str(doc["_id"])  # конверт для JSON
         docs.append(doc)
     return docs
+
+@router.get("/open/{doc_id}")
+def open_document_local(doc_id: str):
+    import os
+    import platform
+    if not ObjectId.is_valid(doc_id):
+        raise HTTPException(400, "Invalid document ID")
+        
+    doc = documents_collection.find_one({"_id": ObjectId(doc_id)})
+    if not doc or "path" not in doc:
+        raise HTTPException(404, "Document not found")
+        
+    file_path = Path(doc["path"])
+    try:
+        if platform.system() == "Windows":
+            os.startfile(str(file_path)) 
+        else:
+            import subprocess
+            subprocess.call(('open', str(file_path)))
+        return {"message": "Opened successfully"}
+    except Exception as e:
+        raise HTTPException(500, f"Failed to open file: {str(e)}")

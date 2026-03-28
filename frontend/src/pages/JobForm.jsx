@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Plus, Save, Edit2, Trash2 } from "lucide-react";
 import { toAED } from "../utils/currency";
 import API from "../api";
-import { format4 } from "../utils/numberFormat";
+import { format4, formatTableNumber } from "../utils/numberFormat";
 import { buildJobApiData } from "../utils/buildJobApiData";
 import ClientSelect from "../components/ClientSelect";
 import { calcTotals } from "../utils/totalModals";
@@ -216,7 +216,8 @@ export default function JobForm() {
     };
     await exportJobSummaryToExcel(
       raw,
-      bnNumber ? `Job_${bnNumber}.xlsx` : undefined
+      bnNumber ? `Job_${bnNumber}.xlsx` : undefined,
+      workerNameMap
     );
   };
 
@@ -464,10 +465,10 @@ export default function JobForm() {
                 <span className="ex-cell num">{i + 1}</span>
                 <span className="ex-cell desc">{expense.description || "—"}</span>
                 <span className="ex-cell">{quantity}</span>
-                <span className="ex-cell">{format4(unit)}</span>
-                <span className="ex-cell">{format4(amount)}</span>
+                <span className="ex-cell">{formatTableNumber(unit)}</span>
+                <span className="ex-cell">{formatTableNumber(amount)}</span>
                 <span className="ex-cell">{currency}</span>
-                <span className="ex-cell">{format4(amountAED)}</span>
+                <span className="ex-cell">{formatTableNumber(amountAED)}</span>
                 <span className="ex-cell">{expense.seller || "—"}</span>
                 <span className="ex-cell">
                   {expense.worker ? workerNameMap[expense.worker] ?? expense.worker : "—"}
@@ -503,10 +504,10 @@ export default function JobForm() {
           {showExpenseTotals && (
             <div className="totals">
               {isNonZero(expenseTotals.sumAED) && (
-                <span>Amount in AED: {format4(expenseTotals.sumAED)}</span>
+                <span>Amount in AED: {formatTableNumber(expenseTotals.sumAED)}</span>
               )}
               {isNonZero(expenseTotals.sumUSD) && (
-                <span>Amount in USD: {format4(expenseTotals.sumUSD)}</span>
+                <span>Amount in USD: {formatTableNumber(expenseTotals.sumUSD)}</span>
               )}
             </div>
           )}
@@ -545,11 +546,13 @@ export default function JobForm() {
                 <span className="ex-cell num">{i + 1}</span>
                 <span className="ex-cell desc">{sale.description || "—"}</span>
                 <span className="ex-cell">{quantity}</span>
-                <span className="ex-cell">{format4(unit)}</span>
-                <span className="ex-cell">{format4(amount)}</span>
+                <span className="ex-cell">{formatTableNumber(unit)}</span>
+                <span className="ex-cell">{formatTableNumber(amount)}</span>
                 <span className="ex-cell">{currency}</span>
-                <span className="ex-cell">{format4(amountAED)}</span>
-                <span className="ex-cell"></span>
+                <span className="ex-cell">{formatTableNumber(amountAED)}</span>
+                <span className="ex-cell">
+                  {sale.coworker_id ? workerNameMap[sale.coworker_id] ?? sale.coworker_name ?? "—" : "—"}
+                </span>
                 <span className="ex-cell">
                   {sale.worker ? workerNameMap[sale.worker] ?? sale.worker : "—"}
                 </span>
@@ -584,10 +587,10 @@ export default function JobForm() {
           {showSaleTotals && (
             <div className="totals">
               {isNonZero(saleTotals.sumAED) && (
-                <span>Amount in AED: {format4(saleTotals.sumAED)}</span>
+                <span>Amount in AED: {formatTableNumber(saleTotals.sumAED)}</span>
               )}
               {isNonZero(saleTotals.sumUSD) && (
-                <span>Amount in USD: {format4(saleTotals.sumUSD)}</span>
+                <span>Amount in USD: {formatTableNumber(saleTotals.sumUSD)}</span>
               )}
             </div>
           )}
@@ -670,6 +673,12 @@ export default function JobForm() {
               value={serviceDone ? ddmmyyyyToISO(serviceDone) : ""}
               onChange={(e) => setServiceDone(isoToDDMMYYYY(e.target.value))}
               disabled={isReadOnly}
+              onKeyDown={(e) => {
+                // Позволяет быстро очистить дату при нажатии Delete
+                if (e.key === "Delete") {
+                  setServiceDone("");
+                }
+              }}
             />
           </label>
 
